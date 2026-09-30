@@ -11,7 +11,8 @@ It holds the protobuf contracts (the single source of truth for every message th
 | `contracts/` | the protobuf contracts: `pqcota.{common,discovery,inventory,provisioning}.v1`. Start with [contracts/README.md](contracts/README.md) and [data-model.md](contracts/data-model.md) |
 | `gen/` | Go code generated from the contracts, **committed** so consumers need only `go get` |
 | `pkg/kernel/` | shared logic: `registry`, `posture`, `scope`, `machineid`, `sign`, `completeness` |
-| `pkg/org/` | organization scoping of stores
+| `pkg/org/` | organization scoping of stores |
+| `cmd/` | `pqcota-keygen`, the ed25519 key generator that both collector signing and plan approval use ([cmd/README.md](cmd/README.md)) |
 
 ## Depends on
 
@@ -30,4 +31,4 @@ Until the modules are tagged, `go.mod` points at the sibling repositories with `
 
 ## Contributing · security · license
 
-Contributing and security reporting are described in the [pqcota repository](https://github.com/randyinthedev-hash/pqcota). Licensed under [Apache-2.0](LICENSE).
+Contributing and security reporting are described in the [pqcota repository](https://github.com/randyinthedev-hash/pqcota). Licensed under [Apache-2.0](https://github.com/randyinthedev-hash/pqcota/blob/main/LICENSE).
