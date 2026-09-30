@@ -33,7 +33,7 @@ type PQCAlgorithm struct {
 // FIPSValidatable — FIPS 검증 대상(최종 표준) 여부. 규제 자산 provider 라우팅의 게이트.
 func (a PQCAlgorithm) FIPSValidatable() bool { return a.Maturity == MaturityFIPS }
 
-// DefaultPQCAlgorithms — 초기 시드(프로비저닝 설계 §4.2, OpenSSL/OQS·JCA 공통 어휘). 표준→진행→실험→파훼 순.
+// DefaultPQCAlgorithms — 초기 시드(아키텍처 §3.4, OpenSSL/OQS·JCA 공통 어휘). 표준→진행→실험→파훼 순.
 var DefaultPQCAlgorithms = []PQCAlgorithm{
 	// ── FIPS 최종 표준 ──
 	{Family: "ML-KEM", Kind: KindKEM, Maturity: MaturityFIPS, Standard: "FIPS 203", tokens: []string{"MLKEM"}},
