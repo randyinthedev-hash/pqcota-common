@@ -18,7 +18,8 @@ option go_package = "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/comm
 // ─────────────────────────────────────────────────────────────────────────
 
 // 암호 런타임 — 모든 finding·자산·조치의 1급 분기 필드.
-// 무엇을 런타임으로 받는지: docs/runtime-acceptance.md
+// 무엇을 런타임으로 받는지: 특정 라이브러리가 아니라 「암호 provider를 가진 런타임」이다. provider로 알고리즘
+// 능력을 주입하는 구조가 같아서 OpenSSL과 JCA를 받는다(수용 원칙 §2.1).
 enum CryptoRuntime {
   CRYPTO_RUNTIME_UNSPECIFIED = 0; // unknown — 판별 불가 (§2.5)
   CRYPTO_RUNTIME_OPENSSL = 1;     // openssl
@@ -26,9 +27,8 @@ enum CryptoRuntime {
   // Windows CNG (Cryptography Next Generation) — provider(KSP/SSP) 아키텍처라 peer 런타임.
   // v0.1.0에서 **스키마로만 예약**했고, 디스커버리는 v0.6.0의 pqcota-cngscan이 채웠다.
   // 프로비저닝은 substrate 일반화가 선행이라 로드맵에 있다.
-  // 상세: docs/under-review.md §2.2
   CRYPTO_RUNTIME_WIN_CNG = 3;
-  // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG 쪽으로 묶인다(peer 아님) — 위 문서 참조.
+  // Python cryptography·Go crypto·Node·.NET는 대개 openssl/CNG 쪽으로 묶인다(peer 아님).
 }
 
 // 탐지 방법 (규정서 §2.3 표의 detection_method 열). Collector가 신고한다.

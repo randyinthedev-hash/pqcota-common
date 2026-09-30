@@ -81,7 +81,7 @@ message RemediationAction {
   // 생성기가 검사하고, 어긋나면 그 근거를 해결하지 않고 불완전으로 센다.
   string finding_id = 3;
 
-  pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기(docs/runtime-acceptance.md)
+  pqcota.common.v1.CryptoRuntime crypto_runtime = 4; // openssl | jca 분기
   RemediationKind kind = 5;                          // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
   DeployAutomationLevel automation_level = 6;        // L1/L2/L3 자산별(§4.3)
 

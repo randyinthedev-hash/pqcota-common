@@ -7,7 +7,7 @@ import (
 	"github.com/randyinthedev-hash/pqcota-common/pkg/kernel/completeness"
 )
 
-// TD-GAP-1 (testcases.md §2). 완전성 맵 — 갭 ≠ 부재.
+// TD-GAP-1. 완전성 맵 — 갭 ≠ 부재.
 func TestCompleteness(t *testing.T) {
 	proc := commonv1.CollectionLayer_COLLECTION_LAYER_PROCESS
 	arti := commonv1.CollectionLayer_COLLECTION_LAYER_ARTIFACT

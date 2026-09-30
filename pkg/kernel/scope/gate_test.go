@@ -7,7 +7,7 @@ import (
 	"github.com/randyinthedev-hash/pqcota-common/pkg/kernel/scope"
 )
 
-// TD-SCOPE-1 (testcases.md §2). 스코프 게이트·라우팅.
+// TD-SCOPE-1. 스코프 게이트·라우팅.
 func TestScopeGate(t *testing.T) {
 	m := scope.NewMaster([]string{"node-a", "node-b"})
 

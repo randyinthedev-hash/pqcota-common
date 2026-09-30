@@ -170,7 +170,7 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 // CngAxes — Windows CNG 분기축. v0.1.0에서 스키마로만 예약했고 **v0.6.0에서 채워졌다**:
 // pqcota-cngscan이 관측하고 정규화(pkg/inventory/normalize)가 이 축을 파생한다. 필드는 provider
 // 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정한 나머지(algorithms)는 그때
-// **번호를 새로 부여해 더했다**(proto3 additive — 하위호환). 상세: docs/runtime-acceptance.md
+// **번호를 새로 부여해 더했다**(proto3 additive — 하위호환).
 type CngAxes struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// provider_set: 등록된 CNG provider(KSP/SSP) 목록. **관측된 순서 그대로** 담는다 — 정렬하지
@@ -302,7 +302,7 @@ func (x *CngAlgorithm) GetProviders() []string {
 type Finding struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`                                                                                 // 정규화 해시 — finding 동일성/dedup 앵커 (§2.4)
-	CryptoRuntime v1.CryptoRuntime       `protobuf:"varint,2,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"` // 1급 분기 필드 (docs/runtime-acceptance.md)
+	CryptoRuntime v1.CryptoRuntime       `protobuf:"varint,2,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"` // 1급 분기 필드
 	UsageContext  v1.UsageContext        `protobuf:"varint,3,opt,name=usage_context,json=usageContext,proto3,enum=pqcota.common.v1.UsageContext" json:"usage_context,omitempty"`
 	Algorithm     string                 `protobuf:"bytes,4,opt,name=algorithm,proto3" json:"algorithm,omitempty"` // 비었으면 소스 부재로 열화됨 (§2.3)
 	// ─ evidence 메타데이터 (§2.3 핵심) ─

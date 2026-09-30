@@ -6,7 +6,7 @@ import (
 	"github.com/randyinthedev-hash/pqcota-common/pkg/kernel/registry"
 )
 
-// TD-JVM-1 (testcases.md §2). provider 레지스트리 매핑.
+// TD-JVM-1. provider 레지스트리 매핑.
 func TestMatchProvider(t *testing.T) {
 	sigs := registry.DefaultProviderSignatures
 

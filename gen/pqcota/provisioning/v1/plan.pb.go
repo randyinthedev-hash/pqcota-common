@@ -304,7 +304,7 @@ type RemediationAction struct {
 	// 예외가 아니다** — 빈값을 봐주면 옛 소비자는 근거 없이, 새 소비자는 주 근거로 읽어 둘이 갈린다.
 	// 생성기가 검사하고, 어긋나면 그 근거를 해결하지 않고 불완전으로 센다.
 	FindingId       string                `protobuf:"bytes,3,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
-	CryptoRuntime   v1.CryptoRuntime      `protobuf:"varint,4,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"`                     // openssl | jca 분기(docs/runtime-acceptance.md)
+	CryptoRuntime   v1.CryptoRuntime      `protobuf:"varint,4,opt,name=crypto_runtime,json=cryptoRuntime,proto3,enum=pqcota.common.v1.CryptoRuntime" json:"crypto_runtime,omitempty"`                     // openssl | jca 분기
 	Kind            RemediationKind       `protobuf:"varint,5,opt,name=kind,proto3,enum=pqcota.provisioning.v1.RemediationKind" json:"kind,omitempty"`                                                    // taxonomy 조치(프로비저닝 설계 §4.1·§4.2)
 	AutomationLevel DeployAutomationLevel `protobuf:"varint,6,opt,name=automation_level,json=automationLevel,proto3,enum=pqcota.provisioning.v1.DeployAutomationLevel" json:"automation_level,omitempty"` // L1/L2/L3 자산별(§4.3)
 	TargetAlgorithm string                `protobuf:"bytes,7,opt,name=target_algorithm,json=targetAlgorithm,proto3" json:"target_algorithm,omitempty"`                                                    // 목표 표준. posture.Remediate 산출. 예 "ML-KEM (FIPS 203)"
