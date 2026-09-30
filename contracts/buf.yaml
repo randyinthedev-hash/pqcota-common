@@ -1,0 +1,17 @@
+# buf 설정 — 계약 lint · 호환성 검사 (빌드는 ubuntu-dev)
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # 서비스·RPC 네이밍은 규정서 어휘를 의도적으로 따른다.
+    # Collector(=수집기 추상, §1.6), CollectionResult/CollectorCapabilities는
+    # 계약 가독성 우선. buf STANDARD의 오피니언 규칙만 완화.
+    - SERVICE_SUFFIX
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+breaking:
+  use:
+    - FILE

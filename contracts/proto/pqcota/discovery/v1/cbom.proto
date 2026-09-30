@@ -1,0 +1,111 @@
+// PQC 마이그레이션 플랫폼 — 정규화된 CBOM 파생 Finding 스키마 (SSOT, DISCOVERY 단계)
+//
+// 규정서 §3.2 확정: 정규 형식 = CycloneDX CBOM(표준 본문) + Envelope(provenance)
+//                    + evidence 메타데이터(확장). CycloneDX 본문 자체는 표준(ECMA-424)이므로
+//                    여기서 재모델링하지 않고 CollectionResult.cbom_cyclonedx로 bytes 운반한다.
+// 이 파일은 코어 정규화 파이프라인이 그 본문에서 파생하는 타입드 Finding을 고정한다.
+
+syntax = "proto3";
+
+package pqcota.discovery.v1;
+
+import "pqcota/common/v1/common.proto";
+
+option go_package = "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/discovery/v1;discoveryv1";
+
+// ─────────────────────────────────────────────────────────────────────────
+// 런타임별 분기 축 (수용 원칙 §2.4)
+// ─────────────────────────────────────────────────────────────────────────
+
+message OpensslAxes {
+  string lib = 1;                     // libssl / libcrypto
+  string version = 2;                 // "unknown" 대신 빈 문자열 + evidence로 표현
+  string fork = 3;                    // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, 수용 원칙 §2.2)
+  pqcota.common.v1.OpensslBindingMode binding_mode = 4;
+}
+
+message JcaAxes {
+  string jdk_vendor = 1;
+  string jdk_version = 2;
+  // provider_set: 등록 "순서 포함". 우선순위 협상(수용 원칙 §2.2 (d)) 판정의 근거.
+  // 목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider는 무시된다.
+  repeated string provider_set = 3;
+  pqcota.common.v1.JcaRegistrationMode registration_mode = 4;
+}
+
+// CngAxes — Windows CNG 분기축. v0.1.0에서 스키마로만 예약했고 **v0.6.0에서 채워졌다**:
+// pqcota-cngscan이 관측하고 정규화(pkg/inventory/normalize)가 이 축을 파생한다. 필드는 provider
+// 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정한 나머지(algorithms)는 그때
+// **번호를 새로 부여해 더했다**(proto3 additive — 하위호환). 상세: docs/runtime-acceptance.md
+message CngAxes {
+  // provider_set: 등록된 CNG provider(KSP/SSP) 목록. **관측된 순서 그대로** 담는다 — 정렬하지
+  // 않는 이유는 관측한 대로 적기 때문이고, 그 순서가 곧 우선순위인지는 CNG에서 **아직 확인되지
+  // 않았다**(JcaAxes에서 물려받은 전제다). 실측: Windows 11 26200에서 알고리즘 50개가 전부
+  // provider 하나씩이라 우선순위 다툼 자체가 일어나지 않았다.
+  repeated string provider_set = 1;
+
+  // algorithms: 그 머신의 CNG가 열거한 알고리즘. **v0.6.0 실측 뒤에 번호를 부여해 더했다** —
+  // provider 이름만으로는 "이 노드가 ML-DSA를 할 수 있나"에 답할 수 없기 때문이다(Windows 11
+  // 26200 실측: provider 9개는 전부 Microsoft 이름이고, PQC 여부는 알고리즘 목록에만 나온다).
+  // 순수 additive라 기존 필드 번호·타입은 그대로다.
+  repeated CngAlgorithm algorithms = 2;
+}
+
+// CngAlgorithm — CNG가 열거한 알고리즘 하나.
+message CngAlgorithm {
+  // name: CNG가 부르는 이름 그대로(예 "ML-DSA"·"ECDH_P256"). 도구가 고쳐 부르지 않는다 —
+  // 관측한 문자열이 그대로 남아야 재정규화가 재현된다(§1.2).
+  string name = 1;
+  // class: cipher · hash · asymmetric-encryption · secret-agreement · signature · rng ·
+  // key-derivation. **모르면 빈 값**이다(§2.5 unknown은 1급) — 모르는 종류를 아는 것으로 적지 않는다.
+  string class = 2;
+
+  // providers: 이 알고리즘을 **실제로 구현하는** provider들(`BCryptEnumProviders`). 등록 목록
+  // (CngAxes.provider_set)은 머신에 무엇이 있는지만 나타내고, 어느 provider가 무엇을 서비스하는지는
+  // 말하지 않는다 — 조치 대상을 고르려면 이쪽이 필요하다. 못 물었으면 **빈 목록**이다(§2.6).
+  repeated string providers = 3;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Finding (수용 원칙 §2.4 · 규정서 §2.4) — 코어 정규화 파이프라인이 파생하는 뷰
+//
+// ★ Collector는 이 타입을 직접 생성하지 않는다. Collector는 표준 CycloneDX +
+//   Envelope만 반환하고(§1.6), 코어 파이프라인의 강화 단계(§2.4 step 3)가
+//   detection_method → evidence_strength, version → pqc_readiness, fork 판별 등을
+//   부착해 Finding으로 파생한다. 파생 뷰이므로 원본에서 항상 재계산 가능(§1.2).
+// ─────────────────────────────────────────────────────────────────────────
+
+message Finding {
+  string id = 1;                       // 정규화 해시 — finding 동일성/dedup 앵커 (§2.4)
+  pqcota.common.v1.CryptoRuntime crypto_runtime = 2;    // 1급 분기 필드 (docs/runtime-acceptance.md)
+  pqcota.common.v1.UsageContext usage_context = 3;
+  string algorithm = 4;                // 비었으면 소스 부재로 열화됨 (§2.3)
+
+  // ─ evidence 메타데이터 (§2.3 핵심) ─
+  pqcota.common.v1.DetectionMethod detection_method = 5;   // Envelope에서 전파 (finding별로 다를 수 있음)
+  pqcota.common.v1.EvidenceStrength evidence_strength = 6; // detection_method에서 파생 (§2.5 AUTO)
+
+  // ─ 런타임별 분기 (수용 원칙 §2.4) ─
+  oneof runtime_axes {
+    OpensslAxes openssl = 7;
+    JcaAxes jca = 8;
+    // oneof arm은 Finding의 필드 번호 공간을 공유한다 — 7·8 다음 빈 번호가 아니라 메시지 전체에서
+    // 안 쓰인 번호(15)를 쓴다. 9~14는 아래 공통 축이 이미 점유.
+    CngAxes cng = 15; // v0.1.0 예약 · v0.6.0부터 정규화가 채운다
+  }
+
+  // ─ 공통 판정 축 (강화 단계 산출) ─
+  string pqc_readiness = 9;     // version→매핑 (§2.4 step 3). JCA는 "네이티브 ∨ provider보강" (수용 원칙 §2.2)
+  string fips_validation = 10;  // 내부 provider는 FIPS 140-3 미검증 태깅 (수용 원칙 §2.3)
+  string remediation_class = 11;// remediation taxonomy 분기 키 (프로비저닝 설계 §4.1·§4.2)
+
+  // ─ 파생 뷰 재현성 (§1.2) ─
+  string derived_from_snapshot_id = 12; // 어떤 원시 스냅샷에서 파생됐나
+  string ruleset_version = 13;          // 어떤 강화 규칙 버전으로 파생됐나 (재계산 재현)
+
+  // ─ 자산이 어느 앱 것인지 (asset.proto) ─
+  // 이 finding(라이브러리)을 로드한 애플리케이션(들). 보통 1개지만, host-wide 스캔에서 하나의 공유
+  // 라이브러리(예: libcrypto.so.3)를 여러 앱이 로드하면 **여러 앱에 걸린다** — 그 .so 교체는 모든
+  // 로더 앱에 영향. 각 원소가 머신 스코프 키라 (node_id[스냅샷]+app_key)=전역 유일.
+  repeated string app_keys = 14;
+}

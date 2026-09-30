@@ -1,0 +1,72 @@
+// PQC 마이그레이션 플랫폼 — 통신 엣지 관측 스키마 (SSOT, DISCOVERY 단계)
+//
+// 인벤토리 설계 §6(크립토 통신 토폴로지) · 인벤토리 설계 §2(CommunicationEdge).
+// network-collector(디스커버리 설계 §2.3)가 TLS/SSH 핸드셰이크를 수동 관측해
+// 노드 간 통신 엣지(src→dst + 협상 KEX 그룹·cipher)를 채운다 → 관측 레인(observed).
+//
+// 책임 경계(§1.6 유지):
+//   Collector = 원시 핸드셰이크 포집 + 협상 파라미터 추출 → ObservedEdge[] 반환.
+//   정규화     = 등급 분류·선언 대조(규정서 §3.3)·토폴로지 렌더(인벤토리 설계 §6). 파생 뷰.
+
+syntax = "proto3";
+
+package pqcota.discovery.v1;
+
+import "google/protobuf/timestamp.proto";
+import "pqcota/common/v1/common.proto";
+
+option go_package = "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/discovery/v1;discoveryv1";
+
+// 관측된 통신 프로토콜. 핸드셰이크가 암호화(QUIC 등)면 파라미터 불명 → UNSPECIFIED로 남긴다(인벤토리 설계 §6.1 ⚪).
+enum NetworkProtocol {
+  NETWORK_PROTOCOL_UNSPECIFIED = 0; // 불명 — 암호화된 핸드셰이크·수집 구간 밖
+  NETWORK_PROTOCOL_TLS = 1;
+  NETWORK_PROTOCOL_SSH = 2;
+  NETWORK_PROTOCOL_QUIC = 3;        // 핸드셰이크 암호화 → 대개 등급 불명
+}
+
+// 관측 시점에서 본 src 노드의 역할(방향). 대조·토폴로지 방향성의 근거.
+enum EdgeRole {
+  EDGE_ROLE_UNSPECIFIED = 0;
+  EDGE_ROLE_CLIENT = 1; // src가 연결 개시자
+  EDGE_ROLE_SERVER = 2; // src가 수신자
+}
+
+// 양자내성 등급 (인벤토리 설계 §6.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
+// Collector 출력에는 존재하지 않는다(§1.2, EvidenceStrength와 동일 원칙).
+enum QuantumPosture {
+  QUANTUM_POSTURE_UNSPECIFIED = 0; // ⚪ 불명·미관측 (암호화 핸드셰이크·캡처 밖)
+  QUANTUM_POSTURE_PQC_HYBRID = 1;  // 🟢 하이브리드/PQC 협상 (X25519MLKEM768, sntrup761x25519 …)
+  QUANTUM_POSTURE_CLASSICAL = 2;   // 🔴 고전 = 양자 취약 (X25519, ECDHE, RSA …)
+}
+
+// 관측된 통신 엣지 한 단위 (§2 CommunicationEdge의 관측 레인).
+// Collector가 CollectionResult.observed_edges로 반환한다. 등급은 코어가 채운다.
+message ObservedEdge {
+  string src_node_id = 1;   // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
+  string dst_node_id = 2;   // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
+  string dst_addr = 3;      // 원시 상대 주소 "ip:port" — dst_node_id를 잇지 못했을 때 off-scope 판정 근거.
+  uint32 port = 4;
+  NetworkProtocol protocol = 5;
+  EdgeRole role = 6;
+
+  string negotiated_group = 7; // 협상된 KEX 그룹. 등급 분류 입력. 예: "X25519MLKEM768".
+  string cipher = 8;           // 협상된 cipher suite (부가 근거).
+
+  pqcota.common.v1.DetectionMethod detection_method = 9; // 대개 RUNTIME_INTROSPECTION(수동 관측) — evidence_strength 파생 근거.
+  uint64 observed_count = 10;           // 관측 횟수(빈도) — confidence 입력(§3.5).
+  google.protobuf.Timestamp first_seen = 11;
+  google.protobuf.Timestamp last_seen = 12;
+
+  // 이 엣지를 연 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
+  // 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 값의 모양은 asset.proto와 같다
+  // — systemd 유닛명 우선, 없으면 exe 경로.
+  //
+  // **비었다는 것은 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이다.** 앱을 늘 짚어내지는 못한다 — best-effort다:
+  // 짧게 붙었다 끊긴 연결은 /proc을 읽는 시점에 이미 없고, 권한이 모자라면 남의 프로세스
+  // fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note에 적힌다 — 관측 갭과 같은 규칙이다.
+  string app_key = 13;
+  // app_key를 무엇에서 뽑았나 — "systemd-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
+  // 근거가 다르면 신뢰도가 다르므로 값만 두고 출처를 버리지 않는다.
+  string app_key_kind = 14;
+}

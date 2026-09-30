@@ -1,0 +1,58 @@
+// PQC 마이그레이션 플랫폼 — 머신 프로필(사람-대면 메타데이터) 스키마 (SSOT, INVENTORY 단계)
+//
+// 인벤토리가 관리하는 머신의 **사람이 보고 구분하는** 정보. 기술적 식별(node_id·지문 MachineIdentity)과
+// 분리한다 — 식별은 기계가 관측하고, 프로필은 **선언(CMDB)/리뷰어가 채운다**(관측 아님).
+// 목적: 인벤토리 뷰·UI에서 사용자가 머신을 시각적으로 구분·그룹핑·필터.
+
+syntax = "proto3";
+
+package pqcota.inventory.v1;
+
+option go_package = "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/inventory/v1;inventoryv1";
+
+// 배포 환경(시각 구분·정책의 1급 축). 자유 태그로도 표현 가능하나 흔한 축이라 enum으로 고정.
+enum Environment {
+  ENVIRONMENT_UNSPECIFIED = 0;
+  ENVIRONMENT_PRODUCTION = 1;
+  ENVIRONMENT_STAGING = 2;
+  ENVIRONMENT_DEVELOPMENT = 3;
+  ENVIRONMENT_TEST = 4;
+}
+
+// 프로필 메타데이터의 출처(provenance).
+enum ProfileSource {
+  PROFILE_SOURCE_UNSPECIFIED = 0;
+  PROFILE_SOURCE_CMDB = 1;      // 선언(CMDB/자산등록부) 임포트
+  PROFILE_SOURCE_REVIEWER = 2;  // 리뷰어가 입력·보정
+  PROFILE_SOURCE_OBSERVED = 3;  // 관측에서 유추(예: hostname → display_name 기본값)
+}
+
+// MachineProfile — 인벤토리가 관리하는 머신의 사람-대면 프로필. node_id로 기술 식별에 앵커.
+// 파생/관측 뷰(Finding·MachineIdentity)와 별개 레인 — 선언·리뷰 산출물이다.
+message MachineProfile {
+  string node_id = 1;      // 기술 ID 앵커(§1.4 — Envelope target_node_id와 동일)
+  string display_name = 2; // 사람이 읽는 이름 (예: "Payment Prod DB")
+  Environment environment = 3;
+  string role = 4;         // 역할/티어 (web|app|db|worker|…)
+  string owner = 5;        // 소유 팀·담당자
+  string location = 6;     // 위치 (DC·리전·존·랙)
+  string description = 7;
+
+  // 임의 태그 — 확장·필터·시각 그룹핑/색상. 예: {"app":"payment","tier":"1","compliance":"pci"}.
+  map<string, string> labels = 8;
+
+  ProfileSource source = 9; // 이 프로필이 어디서 왔나(§1.2 provenance)
+}
+
+// MachineEndpoint — discovery 재접속을 위한 **재사용 가능한 연결 메타데이터**(인벤토리 적재·사용자 수정 가능).
+// ★ 접근 비밀(암호·SSH 키·계정)은 여기 **없다** — 사용자 관리 파일에만 있고, discovery 실행 시
+//   Ansible로 전달돼 쓰이며 pqcota 인벤토리엔 **적재하지 않는다**(비밀 비영속 원칙).
+// IP는 로케이터(재접속 편의)이지 ID가 아니다(§1.4 — 권위 ID는 node_id).
+message MachineEndpoint {
+  string node_id = 1; // 기술 ID 앵커(§1.4)
+  string name = 2;    // 사용자 지정 이름(표시·식별 편의)
+  string ip = 3;      // 대표 IP (SSH 도달 주소 — 로케이터)
+  uint32 port = 4;    // 접속 포트(예: SSH 22)
+  // 비밀 없음: ssh_user·password·key는 사용자 파일(런타임 전용).
+}
+

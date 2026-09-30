@@ -1,0 +1,57 @@
+// PQC 마이그레이션 플랫폼 — 자산 계층 모델 (SSOT, DISCOVERY 단계)
+//
+// Machine → Application → Process 3계층. 식별의 안정성이 계층마다 다르다:
+//   Machine     = node_id(스코프 마스터, §1.4) — 안정·전역 유일.
+//   Application = (node_id, app_key) — app_key는 머신 스코프 안정 키. 전역 유일(충돌·중복 없음).
+//   Process     = PID 휘발 → 저장 안 함. ProcessMatch로 프로비저닝 직전에 "그때그때 이어 붙임".
+// 크립토 Finding(cbom.proto)은 app_key로 애플리케이션에 붙는다.
+
+syntax = "proto3";
+
+package pqcota.discovery.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/randyinthedev-hash/pqcota-common/gen/pqcota/discovery/v1;discoveryv1";
+
+// 애플리케이션 식별 방식(안정 키의 출처).
+enum ApplicationKind {
+  APPLICATION_KIND_UNSPECIFIED = 0;
+  APPLICATION_KIND_SYSTEMD_UNIT = 1; // systemd 유닛명(안정, 머신 스코프) — 권장
+  APPLICATION_KIND_EXE_PATH = 2;     // 실행 파일/설치 경로
+  APPLICATION_KIND_DECLARED = 3;     // CMDB 선언
+}
+
+// ProcessMatch — app → 라이브 프로세스 매칭 규칙. PID를 저장하지 않고 이 규칙으로 실시간 조회한다.
+// 우선순위: systemd_unit(cgroup 정확) > exe_path > cmdline_regex.
+message ProcessMatch {
+  string systemd_unit = 1;  // 예: "payment.service" — cgroup으로 PID 집합을 찾아냄(가장 정확)
+  string exe_path = 2;      // /proc/<pid>/exe 일치
+  string cmdline_regex = 3; // /proc/<pid>/cmdline 패턴
+}
+
+// Application — 타깃 머신에서 동작하는 애플리케이션. 크립토 자산·프로비저닝의 1급 단위.
+// 전역 식별 = (node_id, app_key). node_id가 전역 유일이므로 다른 머신의 동명 앱과 충돌하지 않는다.
+message Application {
+  string node_id = 1; // 스코프 마스터 머신 앵커(§1.4)
+  string app_key = 2; // 머신 스코프 안정 키(systemd 유닛명·exe 경로 등)
+  string name = 3;    // 표시명
+  ApplicationKind kind = 4;
+  ProcessMatch match = 5; // 라이브 프로세스를 찾아내는 규칙
+}
+
+// LiveProcess — 런타임에 찾아낸 결과(저장 안 함, 조회 응답 전용). PID는 휘발.
+// 프로비저닝 L3(재시작) 직전에 "이 앱의 지금 프로세스"를 확정하는 데 쓴다.
+message LiveProcess {
+  uint32 pid = 1;
+  string cmdline = 2;
+  google.protobuf.Timestamp started_at = 3;
+}
+
+// ProcessResolution — app 하나에 대한 라이브 프로세스를 찾아낸 스냅샷(요청 시각 기준).
+message ProcessResolution {
+  string node_id = 1;
+  string app_key = 2;
+  repeated LiveProcess processes = 3;
+  google.protobuf.Timestamp resolved_at = 4; // 이 시각의 라이브 상태 — 즉시 낡을 수 있음(휘발)
+}

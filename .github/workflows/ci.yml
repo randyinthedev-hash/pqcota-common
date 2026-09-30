@@ -1,0 +1,75 @@
+name: ci
+
+# 이 리포의 검사를 사람이 기억하지 않아도 걸리게 한다. 리포 사이에 걸친 검사(import 방향·게이트 배선·문서 링크의
+# 교차 확인)는 통합 리포 pqcota의 ci.yml이 다섯 리포를 함께 받아 잰다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 계약 하위호환 검사가 **릴리스 태그를 기준선**으로 쓴다 — 얕은 클론이면 태그가 없어
+      # 검사가 알리지 않고 건너뛴다. 게이트가 스스로 꺼지는 상태를 만들지 않는다.
+      # 형제 리포를 이 리포와 **나란히** 받는다 — go.mod가 replace로 ../ 를 읽는 배치다.
+      - uses: actions/checkout@v7
+        with:
+          path: pqcota-common
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: pqcota-common/go.mod
+          cache: true
+          cache-dependency-path: pqcota-common/go.sum
+
+      # buf 버전을 고정한다 — gen/이 커밋돼 있으므로, 버전이 바뀌어 출력이 달라지면
+      # 아래 드리프트 검사가 코드 변경 없이도 실패한다.
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+          version: 1.69.0
+
+      # 계약이 SSOT다 — 생성 코드가 proto와 어긋나면 여기서 막는다.
+      - name: generate
+        working-directory: pqcota-common
+        run: |
+          make tools
+          make generate
+          git diff --exit-code --stat || {
+            echo "✗ 생성 코드가 proto와 어긋난다 — 로컬에서 make generate 후 커밋할 것"
+            exit 1
+          }
+
+      - name: lint (proto)
+        working-directory: pqcota-common
+        run: make lint
+
+      # 이미 릴리스한 계약을 깨지 않는지. 태그 전에는 기준선이 없어 건너뛴다(이유를 로그에 남긴다).
+      - name: 계약 하위호환 (buf breaking)
+        working-directory: pqcota-common
+        run: make breaking
+
+      - name: fmt / vet
+        working-directory: pqcota-common
+        run: |
+          make fmt-check
+          make vet
+
+      - name: build
+        working-directory: pqcota-common
+        run: make build
+
+      - name: test
+        working-directory: pqcota-common
+        run: go test ./... -count=1
