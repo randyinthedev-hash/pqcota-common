@@ -131,16 +131,16 @@ The core pipeline reads those keys and maps them into a typed `Finding`.
 
 ## When you change the contract — ripple check
 
-Fixing the proto is not the end. **Two things in the code are derived from the contract, and if you forget either, the build still passes and only the behaviour breaks.**
+Fixing the proto is not the end. **Two things in the code are derived from the contract. A test guards the first; nothing guards the second, so forgetting it leaves the build green and only the behaviour breaks.**
 
 | Also look at | When | If you forget |
 |---|---|---|
 | [`sign.Canonical`](../pkg/kernel/sign) | **adding a field** to `CollectionResult`, `Envelope`, `MachineIdentity`, `Completeness`, or `ObservedEdge` | the new field becomes a **signature blind spot** — tamper with it and verification still passes.<br>Widening the scope **invalidates every existing signature**, so after a release it needs a migration |
-| [`history.ContentHash`](https://github.com/randyinthedev-hash/pqcota-inventory/tree/main/pkg/inventory/history) | **adding a substantive content field** to `Finding`, `ObservedEdge`, or `Completeness` | a change to that field folds into "no change" and **vanishes silently from the history** |
+| [`history.ContentHashV1`](https://github.com/randyinthedev-hash/pqcota-inventory/tree/main/pkg/inventory/history) (the snapshot fingerprint) | **adding a substantive content field** to `Finding`, `ObservedEdge`, or `Completeness` | a change to that field folds into "no change" and **vanishes silently from the history**. **Do not edit the frozen v1**: a field that must count needs a new fingerprint format version, designed together with its storage, lookup and downstream consumers |
 
-**Tests watch both** — if the field count changes, `TestCanonicalCoversAllFields` fails and tells you what to do. Do not wave the failure away by editing the expected value. That is precisely how blind spots get made.
+**A test watches the first** — if the field count changes, `TestCanonicalCoversAllFields` fails (for plans, `TestCanonicalPlanCoversAllFields`) and tells you what to do. Do not wave the failure away by editing the expected value. That is precisely how blind spots get made. **No test watches the second**, so check the fingerprint by hand. The step-by-step version is [Change a contract](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/change-a-contract.md).
 
-**If you changed a derivation rule**, bump `ruleset_version` and **recompute** past snapshots from their originals to get the new verdicts. A derived value is a function of the rule, not a stored value.
+**If you changed a derivation rule**, bump `ruleset_version`. A derived value is a function of the rule, not a stored value, so past verdicts can be **recomputed from the original collector results if you kept them**; an inventory snapshot does not hold the raw result, and there is no command that recomputes the past for you.
 
 Watch out for **fields where order carries meaning** — `JcaAxes.provider_set` registration order determines priority negotiation, so it is never sorted or normalized.
 
