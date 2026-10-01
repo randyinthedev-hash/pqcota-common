@@ -27,7 +27,7 @@ go test ./...   # unit tests only
 
 `make generate` regenerates `gen/` from `contracts/` (needs `buf`, `protoc-gen-go` and `protoc-gen-go-grpc`; `make tools` installs the two plugins). `make lint` and `make breaking` check the contracts, and `make breaking` compares against the latest release tag.
 
-Until the modules are tagged, `go.mod` points at the sibling repositories with `replace` directives (`../pqcota-common` and so on), so clone the repositories side by side. Remove the `replace` lines and raise the `require` versions once the tags exist.
+`pqcota-common` has no sibling dependencies, so its `go.mod` has no `replace` directive. The other four repositories read it from `../pqcota-common` through theirs, so clone the repositories side by side. See the [build guide](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/build.md#get-the-source).
 
 ## Contributing · security · license
 
