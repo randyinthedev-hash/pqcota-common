@@ -1,3 +1,5 @@
+English · [한국어](data-model.ko.md)
+
 # Data model schema (the contracts SSOT reference)
 
 
