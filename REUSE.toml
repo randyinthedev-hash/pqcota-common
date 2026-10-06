@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 # SPDX-License-Identifier: Apache-2.0
 #
 # 머리말을 넣을 수 없는 파일(문서·데이터·설정·생성 코드 등)의 저작권과 라이선스.
@@ -8,7 +8,7 @@ version = 1
 [[annotations]]
 path = "**"
 precedence = "closest"
-SPDX-FileCopyrightText = "2026 randyinthedev"
+SPDX-FileCopyrightText = "2026 Great Honor <randyinthedev@gmail.com>"
 SPDX-License-Identifier = "Apache-2.0"
 
 # 생성 코드(protoc-gen-go): contracts/의 .proto에서 만든다. 원본 .proto의 머리말이 생성 파일 맨 앞에 복사된다.
@@ -16,5 +16,5 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = "gen/**"
 precedence = "closest"
-SPDX-FileCopyrightText = "2026 randyinthedev"
+SPDX-FileCopyrightText = "2026 Great Honor <randyinthedev@gmail.com>"
 SPDX-License-Identifier = "Apache-2.0"

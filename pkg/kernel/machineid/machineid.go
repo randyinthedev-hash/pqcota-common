@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 // SPDX-License-Identifier: Apache-2.0
 
 // Package machineid — 머신 상관 지문 수집 + 자동 UID(self-id) 결정론적 부여 (규정서 §1.4).

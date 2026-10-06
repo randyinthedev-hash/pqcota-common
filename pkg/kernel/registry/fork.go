@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 // SPDX-License-Identifier: Apache-2.0
 
 // Package registry — 디스커버리 강화 단계가 쓰는 결정론적 시그니처 대조 데이터(수용 원칙 §2.3,

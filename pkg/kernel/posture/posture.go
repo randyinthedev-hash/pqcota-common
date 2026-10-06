@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 // SPDX-License-Identifier: Apache-2.0
 
 // Package posture — 협상된 키 교환 그룹을 양자내성 등급으로 분류한다(인벤토리 설계 §6.1).

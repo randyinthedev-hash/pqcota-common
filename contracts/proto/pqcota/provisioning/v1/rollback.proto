@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-FileCopyrightText: 2026 Great Honor <randyinthedev@gmail.com>
 // SPDX-License-Identifier: Apache-2.0
 
 // PQC 마이그레이션 플랫폼 — 프로비저닝 히스토리·롤백 모델 (SSOT, PROVISIONING 단계)
