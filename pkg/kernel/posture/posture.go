@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package posture — 협상된 키 교환 그룹을 양자내성 등급으로 분류한다(인벤토리 설계 §6.1).
 // 파생 뷰 — 관측된 협상 그룹 문자열에서 결정론적으로 판정한다(§1.2).
 // 공유 규칙: network-collector도, 대조 엔진도 같은 규칙을 써야 하므로 여기에 둔다.

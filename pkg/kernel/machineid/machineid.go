@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package machineid — 머신 상관 지문 수집 + 자동 UID(self-id) 결정론적 부여 (규정서 §1.4).
 // 권위 머신 ID는 CMDB(스코프 마스터). CMDB가 없으면 안정 지문에서 **결정론적으로** self-id를 파생한다
 // — 랜덤이 아니라 같은 머신이면 항상 같은 값이라 중복이 없다. IP는 ID가 아니라 로케이터.

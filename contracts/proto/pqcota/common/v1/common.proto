@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 공유 어휘 (SSOT, 단계 가로지름)
 //
 // 세 단계(discovery/inventory/deploy)가 모든 경계에서 공유하는 통제 어휘·Envelope.

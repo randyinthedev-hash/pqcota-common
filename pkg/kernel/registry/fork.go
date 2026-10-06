@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package registry — 디스커버리 강화 단계가 쓰는 결정론적 시그니처 대조 데이터(수용 원칙 §2.3,
 // 아키텍처 §3.3). 파생 규칙이므로
 // 개선 시 원본에서 재계산되며 ruleset_version으로 고정된다(§1.2).

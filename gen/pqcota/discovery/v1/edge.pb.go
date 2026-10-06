@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 통신 엣지 관측 스키마 (SSOT, DISCOVERY 단계)
 //
 // 인벤토리 설계 §6(크립토 통신 토폴로지) · 인벤토리 설계 §2(CommunicationEdge).

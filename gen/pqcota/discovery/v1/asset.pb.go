@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 자산 계층 모델 (SSOT, DISCOVERY 단계)
 //
 // Machine → Application → Process 3계층. 식별의 안정성이 계층마다 다르다:

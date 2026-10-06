@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 package registry
 
 // RemediationAction — 관측된 암호 협상에 대한 권고 조치(remediation 분기).

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 리뷰 판정(Decision) 스키마 (SSOT, INVENTORY 단계)
 //
 // 인벤토리 설계 §2(Decision)·§3.3③(리뷰-확정 상태기계)·§3.6(근거 해시 무효화).

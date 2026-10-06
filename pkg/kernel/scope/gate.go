@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package scope — 스코프 마스터 게이트(규정서 §1.4). 자산관리정보(CMDB)가
 // 관리 대상 경계의 유일 권위 소스이며, 디스커버리·프로비저닝 대상이 모두 이로 게이트된다.
 package scope

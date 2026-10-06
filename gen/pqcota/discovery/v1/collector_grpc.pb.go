@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — Collector Intake 계약 (SSOT, DISCOVERY 단계)
 //
 // 규정서 §1.6: 코어는 "노드를 주면 정규화된 CBOM을 반환한다"는 collector 추상만 의존한다.

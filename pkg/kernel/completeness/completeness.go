@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package completeness — collector가 낸 계층 커버리지(완전성 맵)의 결정론적 조립.
 //
 // collector는 자기가 본 계층과 볼 수 있다고 선언한 계층만 알리고, 갭(선언−커버)은 여기서 계산한다.

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 머신 프로필(사람-대면 메타데이터) 스키마 (SSOT, INVENTORY 단계)
 //
 // 인벤토리가 관리하는 머신의 **사람이 보고 구분하는** 정보. 기술적 식별(node_id·지문 MachineIdentity)과

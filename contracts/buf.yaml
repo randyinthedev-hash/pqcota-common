@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 randyinthedev
+# SPDX-License-Identifier: Apache-2.0
 # buf 설정 — 계약 lint · 호환성 검사 (빌드는 ubuntu-dev)
 version: v2
 modules:

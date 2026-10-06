@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package sign — collector 리포트 서명·검증 (규정서 §2.6 — provenance).
 // ed25519로 CollectionResult를 서명하고, 중앙 적재가 등록된 공개키로 검증한다.
 // 전송 보안(mTLS/SSH)이 없는 경로(T1 self-service·에어갭)에서 페이로드 신뢰의 앵커가 된다.

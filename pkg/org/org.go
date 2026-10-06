@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Package org — 인벤토리의 조직 축.
 //
 // 이 리포의 저장소는 한 조직만 담을 수도 있고 여럿을 담을 수도 있다. 어느 쪽이든 **모든 행은

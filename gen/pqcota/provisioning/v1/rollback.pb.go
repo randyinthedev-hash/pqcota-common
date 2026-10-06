@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 프로비저닝 히스토리·롤백 모델 (SSOT, PROVISIONING 단계)
 //
 // 규정서 §1.3(행위 계열 provenance)·§4.3(단계 경계=롤백 지점)· 프로비저닝 설계 §4.1("cnf 한 줄 롤백").

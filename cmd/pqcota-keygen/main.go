@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // Command pqcota-keygen — collector 리포트 서명용 ed25519 키쌍을 생성한다(§2.6).
 // 개인키는 노드 스캐너(PQCOTA_SIGN_KEY)에, 공개키는 중앙 적재(PQCOTA_VERIFY_KEY)에 등록한다.
 // 같은 형식의 키쌍을 계획 승인 서명에도 쓴다(pqcota-approve의 PQCOTA_APPROVAL_KEY, pqcota-provision의

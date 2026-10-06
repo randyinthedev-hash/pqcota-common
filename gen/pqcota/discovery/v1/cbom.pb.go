@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 정규화된 CBOM 파생 Finding 스키마 (SSOT, DISCOVERY 단계)
 //
 // 규정서 §3.2 확정: 정규 형식 = CycloneDX CBOM(표준 본문) + Envelope(provenance)

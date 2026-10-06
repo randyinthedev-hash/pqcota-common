@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 randyinthedev
+// SPDX-License-Identifier: Apache-2.0
+
 // PQC 마이그레이션 플랫폼 — 확정 계획(프로비저닝 입력) 스키마 (SSOT, PROVISIONING 단계)
 //
 // 규정서 §4.1(계획 vs 실행 분리) · 프로비저닝 설계 §4.1·§4.2(remediation taxonomy) · §4.3(단계적 배포 L1/L2/L3)
