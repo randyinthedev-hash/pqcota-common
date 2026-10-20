@@ -85,9 +85,9 @@ Discovery's `Finding` does not have this field — a deliberate separation to pr
 ### 5. The gRPC boundary is the GPL-contagion barrier ([license notes](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.md))
 
 The `Collector` service boundary is also the license isolation boundary.
-A GPL collector (CipherIQ's `cbom-generator`, for instance) runs as a **separate process** and
-**exchanges only CycloneDX on stdout**. The core never links it as a library.
-`CollectorCapabilities.license` surfaces the implications to the user ([license notes](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.md)).
+No GPL collector exists today; external CBOMs are read from files by `pqcota-cbom-ingest`. If a GPL collector (CipherIQ's `cbom-generator`, for instance) is added, it would run as a **separate process** and
+**exchange only CycloneDX on stdout**. The core would never link it as a library.
+Each collector states its license in `CollectorCapabilities.license` ([license notes](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.md)).
 
 ### 6. The plan schema is a public contract
 

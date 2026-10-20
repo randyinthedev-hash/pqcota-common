@@ -82,9 +82,9 @@ Discovery의 `Finding`에는 이 필드가 없습니다. 단계를 혼동하지 
 ### 5. gRPC 경계는 GPL 전염 차단벽이다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md))
 
 `Collector` 서비스 경계는 라이선스 격리 경계이기도 합니다.
-GPL 수집기(예를 들어 CipherIQ의 `cbom-generator`)는 **별도 프로세스**로 실행되고
+지금 구현된 GPL 수집기는 없고, 외부 CBOM은 `pqcota-cbom-ingest`가 파일로 읽습니다. GPL 수집기(예를 들어 CipherIQ의 `cbom-generator`)를 붙인다면 **별도 프로세스**로 실행하고
 **표준 출력으로 CycloneDX만 주고받습니다.** 코어는 그것을 라이브러리로 링크하지 않습니다.
-`CollectorCapabilities.license`는 그 영향을 사용자에게 드러냅니다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md)).
+각 수집기는 `CollectorCapabilities.license`에 라이선스를 적습니다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md)).
 
 ### 6. 계획 스키마는 공개 계약이다
 
