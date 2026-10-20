@@ -79,9 +79,9 @@ Normalization →  steps 3–6 : enrich → validate → resolve identity → pe
 검토자가 자산마다 정하는 계획/자산 속성(MANUAL)이며, 계획 엔티티에 실립니다(워크플로는 계획 쪽에 있습니다).
 Discovery의 `Finding`에는 이 필드가 없습니다. 단계를 혼동하지 않도록 일부러 분리한 것입니다.
 
-### 5. gRPC 경계는 GPL 전염 차단벽이다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md))
+### 5. GPL 수집기는 gRPC 경계 뒤에 둔다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md))
 
-`Collector` 서비스 경계는 라이선스 격리 경계이기도 합니다.
+`Collector` 서비스 경계는 GPL 코드를 코어에서 떼어 두는 자리이기도 합니다. 이것은 기술적 분리이며, 라이선스가 무엇을 요구하는지는 따로 검토합니다.
 지금 구현된 GPL 수집기는 없고, 외부 CBOM은 `pqcota-cbom-ingest`가 파일로 읽습니다. GPL 수집기(예를 들어 CipherIQ의 `cbom-generator`)를 붙인다면 **별도 프로세스**로 실행하고
 **표준 출력으로 CycloneDX만 주고받습니다.** 코어는 그것을 라이브러리로 링크하지 않습니다.
 각 수집기는 `CollectorCapabilities.license`에 라이선스를 적습니다([라이선스 안내](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md)).
@@ -125,7 +125,7 @@ Discovery의 `Finding`에는 이 필드가 없습니다. 단계를 혼동하지 
 
 - 패키지는 `pqcota.{common,discovery,inventory,provisioning}.v1`입니다. **호환을 깨는 변경은 새 `v2`입니다.** `v1` 필드 번호를 다시 쓰거나 의미를 바꾸지 마세요.
 - 필드를 없앨 때는 그 번호를 `reserved`로 표시합니다. 열거형 값을 더하는 것은 하위 호환입니다(항상 맨 끝에 붙입니다).
-- 이 계약은 이 리포지터리(Apache-2.0)에 속합니다. 정본 CBOM 스키마와 프로필은 공개입니다([라이선스 안내, 5절](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md#5-카피레프트-격리-무엇이-지키는가)).
+- 이 계약은 이 리포지터리(Apache-2.0)에 속합니다. 정본 CBOM 스키마와 프로필은 공개입니다([라이선스 안내, 5절](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/licensing.ko.md#5-gpl-코드를-떼어-두는-방법-무엇이-지키는가)).
 
 ## 계약을 바꿀 때: 파급 확인
 
