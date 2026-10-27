@@ -25,6 +25,10 @@ message OpensslAxes {
   string version = 2;                 // "unknown" 대신 빈 문자열 + evidence로 표현
   string fork = 3;                    // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, 수용 원칙 §2.2)
   pqcota.common.v1.OpensslBindingMode binding_mode = 4;
+  // path — 이 라이브러리 파일의 절대 경로. 한 노드에 파일 이름이 같은 설치본이 둘 이상일 때
+  // (시스템 libssl.so.3과 앱이 번들한 libssl.so.3) 둘을 가르는 것이 이것이고, finding id에도 들어간다.
+  // 비어 있으면 경로를 모르는 입력이다(외부 CBOM 등) — 지어내지 않는다.
+  string path = 5;
 }
 
 message JcaAxes {

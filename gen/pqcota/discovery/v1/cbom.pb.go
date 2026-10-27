@@ -33,11 +33,15 @@ const (
 )
 
 type OpensslAxes struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Lib           string                 `protobuf:"bytes,1,opt,name=lib,proto3" json:"lib,omitempty"`         // libssl / libcrypto
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"` // "unknown" 대신 빈 문자열 + evidence로 표현
-	Fork          string                 `protobuf:"bytes,3,opt,name=fork,proto3" json:"fork,omitempty"`       // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, 수용 원칙 §2.2)
-	BindingMode   v1.OpensslBindingMode  `protobuf:"varint,4,opt,name=binding_mode,json=bindingMode,proto3,enum=pqcota.common.v1.OpensslBindingMode" json:"binding_mode,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Lib         string                 `protobuf:"bytes,1,opt,name=lib,proto3" json:"lib,omitempty"`         // libssl / libcrypto
+	Version     string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"` // "unknown" 대신 빈 문자열 + evidence로 표현
+	Fork        string                 `protobuf:"bytes,3,opt,name=fork,proto3" json:"fork,omitempty"`       // OpenSSL|BoringSSL|LibreSSL|AWS-LC (동일 soname 문제, 수용 원칙 §2.2)
+	BindingMode v1.OpensslBindingMode  `protobuf:"varint,4,opt,name=binding_mode,json=bindingMode,proto3,enum=pqcota.common.v1.OpensslBindingMode" json:"binding_mode,omitempty"`
+	// path — 이 라이브러리 파일의 절대 경로. 한 노드에 파일 이름이 같은 설치본이 둘 이상일 때
+	// (시스템 libssl.so.3과 앱이 번들한 libssl.so.3) 둘을 가르는 것이 이것이고, finding id에도 들어간다.
+	// 비어 있으면 경로를 모르는 입력이다(외부 CBOM 등) — 지어내지 않는다.
+	Path          string `protobuf:"bytes,5,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -98,6 +102,13 @@ func (x *OpensslAxes) GetBindingMode() v1.OpensslBindingMode {
 		return x.BindingMode
 	}
 	return v1.OpensslBindingMode(0)
+}
+
+func (x *OpensslAxes) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
 }
 
 type JcaAxes struct {
@@ -511,12 +522,13 @@ var File_pqcota_discovery_v1_cbom_proto protoreflect.FileDescriptor
 
 const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\n" +
-	"\x1epqcota/discovery/v1/cbom.proto\x12\x13pqcota.discovery.v1\x1a\x1dpqcota/common/v1/common.proto\"\x96\x01\n" +
+	"\x1epqcota/discovery/v1/cbom.proto\x12\x13pqcota.discovery.v1\x1a\x1dpqcota/common/v1/common.proto\"\xaa\x01\n" +
 	"\vOpensslAxes\x12\x10\n" +
 	"\x03lib\x18\x01 \x01(\tR\x03lib\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x12\n" +
 	"\x04fork\x18\x03 \x01(\tR\x04fork\x12G\n" +
-	"\fbinding_mode\x18\x04 \x01(\x0e2$.pqcota.common.v1.OpensslBindingModeR\vbindingMode\"\xc0\x01\n" +
+	"\fbinding_mode\x18\x04 \x01(\x0e2$.pqcota.common.v1.OpensslBindingModeR\vbindingMode\x12\x12\n" +
+	"\x04path\x18\x05 \x01(\tR\x04path\"\xc0\x01\n" +
 	"\aJcaAxes\x12\x1d\n" +
 	"\n" +
 	"jdk_vendor\x18\x01 \x01(\tR\tjdkVendor\x12\x1f\n" +

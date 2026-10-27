@@ -67,7 +67,7 @@ The typed view the core normalization pipeline derives from the `cbom_cyclonedx`
 
 | Message | Purpose | Key fields |
 |---|---|---|
-| `OpensslAxes` | the OpenSSL branch axis | `lib`·`version`·`fork` (OpenSSL/BoringSSL/…)·`binding_mode` |
+| `OpensslAxes` | the OpenSSL branch axis | `lib`·`version`·`fork` (OpenSSL/BoringSSL/…)·`binding_mode`·`path` (the library file; empty when the input does not say) |
 | `JcaAxes` | the JCA branch axis | `jdk_vendor`·`jdk_version`·`provider_set` (**order is meaningful** — priority negotiation)·`registration_mode` |
 | `CngAxes` | the Windows CNG branch axis | `provider_set` (KSP/SSP, **in observed order**) · `algorithms` (name, class, and which providers serve it) |
 | **`Finding`** | one crypto asset (a derived view) | `id` (canonical hash)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method` + **`evidence_strength`** (derived) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id` + `ruleset_version` (reproduction) · **`app_keys`** (asset attribution; a shared .so has several) |

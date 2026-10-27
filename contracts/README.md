@@ -109,6 +109,7 @@ The core pipeline reads those keys and maps them into a typed `Finding`.
 | `pqcota:usage_context` | `server`\|`client`\|`at-rest`\|`signing` | `usage_context` |
 | `pqcota:openssl.fork` | `OpenSSL`\|`BoringSSL`\|… | `openssl.fork` |
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
+| `pqcota:openssl.path` | absolute path of the library file | `openssl.path` — **part of the finding id when present**, so two installations with the same file name on one node stay two assets. A version change at the same path is still the same asset |
 | `pqcota:jca.provider_set` | CSV in registration order | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
 | `pqcota:cng.provider_set` | CSV in registration order | `cng.provider_set` — Windows CNG. **Exactly as observed** (not sorted). Whether that order is a priority is unconfirmed on CNG |

@@ -67,7 +67,7 @@
 
 | 메시지 | 목적 | 주요 필드 |
 |---|---|---|
-| `OpensslAxes` | OpenSSL 분기 축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode` |
+| `OpensslAxes` | OpenSSL 분기 축 | `lib`·`version`·`fork`(OpenSSL/BoringSSL/…)·`binding_mode`·`path`(라이브러리 파일, 입력에 없으면 빈 값) |
 | `JcaAxes` | JCA 분기 축 | `jdk_vendor`·`jdk_version`·`provider_set`(**순서에 의미가 있습니다**: 우선순위 협상)·`registration_mode` |
 | `CngAxes` | Windows CNG 분기 축 | `provider_set`(KSP/SSP, **관측한 순서대로**) · `algorithms`(이름, 분류, 그것을 제공하는 provider) |
 | **`Finding`** | 암호 자산 하나(파생 뷰) | `id`(정본 해시)·`crypto_runtime`·`usage_context`·`algorithm` · `detection_method` + **`evidence_strength`**(파생) · `oneof {openssl\|jca}` · `pqc_readiness`·`fips_validation`·`remediation_class` · `derived_from_snapshot_id` + `ruleset_version`(재현) · **`app_keys`**(자산 귀속, 공유 .so에는 여럿이 있습니다) |

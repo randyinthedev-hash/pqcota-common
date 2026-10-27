@@ -106,6 +106,7 @@ Discovery의 `Finding`에는 이 필드가 없습니다. 단계를 혼동하지 
 | `pqcota:usage_context` | `server`\|`client`\|`at-rest`\|`signing` | `usage_context` |
 | `pqcota:openssl.fork` | `OpenSSL`\|`BoringSSL`\|… | `openssl.fork` |
 | `pqcota:openssl.binding_mode` | `dynamic`\|`static`\|`dlopen`\|`vendored` | `openssl.binding_mode` |
+| `pqcota:openssl.path` | 라이브러리 파일의 절대 경로 | `openssl.path`: **있으면 finding id에 들어갑니다.** 그래서 한 노드에 파일 이름이 같은 설치본이 둘이어도 자산 둘로 남습니다. 같은 경로에서 판만 바뀌면 같은 자산입니다 |
 | `pqcota:jca.provider_set` | 등록 순서대로 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
 | `pqcota:cng.provider_set` | 등록 순서대로 CSV | `cng.provider_set`: Windows CNG. **관측한 그대로**(정렬하지 않습니다). 그 순서가 우선순위인지는 CNG에서 확인되지 않았습니다 |
