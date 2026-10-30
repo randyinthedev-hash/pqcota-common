@@ -109,6 +109,7 @@ Discovery의 `Finding`에는 이 필드가 없습니다. 단계를 혼동하지 
 | `pqcota:openssl.path` | 라이브러리 파일의 절대 경로 | `openssl.path`: **있으면 finding id에 들어갑니다.** 그래서 한 노드에 파일 이름이 같은 설치본이 둘이어도 자산 둘로 남습니다. 같은 경로에서 판만 바뀌면 같은 자산입니다 |
 | `pqcota:jca.provider_set` | 등록 순서대로 CSV | `jca.provider_set` |
 | `pqcota:jca.registration_mode` | `static`\|`dynamic`\|`explicit` | `jca.registration_mode` |
+| `pqcota:jca.pqc_services` | `provider=알고리즘\|알고리즘`의 CSV. provider마다 등록한 서비스 가운데 표준 PQC 알고리즘 이름(ML-KEM·ML-DSA·SLH-DSA 계열)입니다. 서비스 목록을 봤지만 하나도 없으면 `SunEC=`처럼 적습니다 | 없음. 코어가 `pqc_readiness`를 도출할 때만 읽습니다. **provider마다 키가 있는지가 관측했는지입니다.** 빈 목록은 「봤는데 없다」이고, 키가 없는 provider는 보지 않은 것입니다(정적 폴백에서는 속성 전체를 싣지 않습니다). 코어는 보지 않은 JDK 기본 제공 provider를 셈에 넣지 않습니다. 이름과 판으로는 ML-KEM·ML-DSA가 등록돼 있는지 알 수 없기 때문입니다(Temurin 21.0.13은 백포트로 등록하고 21.0.12는 등록하지 않는데, 둘 다 판이 `21`입니다). 보는 것은 등록된 서비스 목록이고, 연산이 성공하는지나 실제 통신에서 쓰이는지는 재지 않습니다 |
 | `pqcota:cng.provider_set` | 등록 순서대로 CSV | `cng.provider_set`: Windows CNG. **관측한 그대로**(정렬하지 않습니다). 그 순서가 우선순위인지는 CNG에서 확인되지 않았습니다 |
 | `pqcota:cng.algorithms` | `name:kind[:provider\|provider]`의 CSV (예: `ML-DSA:signature:Microsoft Primitive Provider`) | `cng.algorithms`: 종류를 알 수 없으면 값이 **비고**, provider를 물어볼 수 없었으면 **세 번째 필드를 생략합니다**. CNG 이름에는 쉼표, 콜론, `\|`가 들어 있지 않습니다(측정함) |
 | `pqcota:app_keys` | 앱 키의 CSV (공유 .so에는 여럿이 있습니다) | `app_keys`(repeated): 자산 귀속 |

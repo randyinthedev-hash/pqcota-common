@@ -21,8 +21,14 @@ var DefaultProviderSignatures = []ProviderSignature{
 	{Match: "bcprov-jdk18on", Aliases: []string{"BC"}, Nature: "pure-java", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "none", LicenseClass: "permissive"},
 	{Match: "bc-fips", Aliases: []string{"BCFIPS", "BC-FJA"}, Nature: "fips-native", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "140-3", LicenseClass: "fips-contract"},
 	{Match: "openssl-jostle", Aliases: []string{"JOSTLE"}, Nature: "jni-bridge", PQCAlgorithms: []string{"ML-KEM", "ML-DSA", "SLH-DSA"}, FipsValidation: "module-dependent", LicenseClass: "permissive"},
-	// JDK 네이티브(24/25+): ML-KEM/ML-DSA만, SLH-DSA 없음(수용 원칙 §2.3).
-	{Match: "SunJCE", Aliases: []string{"SunEC"}, Nature: "jdk-builtin", PQCAlgorithms: []string{"ML-KEM", "ML-DSA"}, FipsValidation: "jdk-dependent", LicenseClass: "permissive"},
+	// JDK 네이티브: ML-KEM은 SunJCE, ML-DSA는 SUN이 서비스한다(JEP 496·497). SLH-DSA는 없다(수용 원칙 §2.3).
+	// SunEC는 EC 계열이라 둘 다 서비스하지 않는다.
+	//
+	// **이름과 판으로는 있는지 알 수 없다.** JDK 24부터 들어왔지만 21에도 백포트됐다 — 실측(2026-10-30,
+	// Temurin)에서 21.0.11·21.0.12에는 없고 21.0.13에는 있었는데, provider 판은 셋 다 "21"이다.
+	// 그래서 코어는 jdk-builtin 항목을 **서비스를 관측했을 때만** 센다(normalize.jcaEnrichment).
+	{Aliases: []string{"SunJCE"}, Nature: "jdk-builtin", PQCAlgorithms: []string{"ML-KEM"}, FipsValidation: "jdk-dependent", LicenseClass: "permissive"},
+	{Aliases: []string{"SUN"}, Nature: "jdk-builtin", PQCAlgorithms: []string{"ML-DSA"}, FipsValidation: "jdk-dependent", LicenseClass: "permissive"},
 }
 
 // MatchProvider — provider 식별자를 레지스트리와 대조. JAR명은 Match 부분문자열,

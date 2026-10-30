@@ -31,16 +31,35 @@ func TestMatchProvider(t *testing.T) {
 		}
 	})
 
-	t.Run("JDK-native (SunJCE) → tagged with the SLH-DSA gap", func(t *testing.T) {
-		p, ok := registry.MatchProvider("SunJCE", sigs)
-		if !ok {
-			t.Fatal("expected match for SunJCE")
+	// JDK 기본 제공은 provider마다 서비스하는 알고리즘이 다르다(JDK 24 실측: SunJCE=ML-KEM, SUN=ML-DSA).
+	// 기본 체인에서는 셋이 함께 있어 체인 전체의 답이 같아 보여도, provider 하나의 답은 따로 맞아야 한다.
+	t.Run("JDK-native: SunJCE serves ML-KEM, SUN serves ML-DSA", func(t *testing.T) {
+		cases := []struct {
+			name, covers, notCovers string
+		}{
+			{"SunJCE", "ML-KEM", "ML-DSA"},
+			{"SUN", "ML-DSA", "ML-KEM"},
 		}
-		if !registry.SLHDSAGap(p) {
-			t.Error("JDK-native must be flagged with SLH-DSA gap (acceptance principle §2.3)")
+		for _, c := range cases {
+			p, ok := registry.MatchProvider(c.name, sigs)
+			if !ok {
+				t.Fatalf("expected match for %s", c.name)
+			}
+			if p.Nature != "jdk-builtin" {
+				t.Errorf("%s nature = %q, want jdk-builtin", c.name, p.Nature)
+			}
+			if !p.Covers(c.covers) || p.Covers(c.notCovers) {
+				t.Errorf("%s should cover %s and not %s: %v", c.name, c.covers, c.notCovers, p.PQCAlgorithms)
+			}
+			if !registry.SLHDSAGap(p) {
+				t.Errorf("%s must be flagged with the SLH-DSA gap (acceptance principle §2.3)", c.name)
+			}
 		}
-		if p.Covers("SLH-DSA") {
-			t.Error("JDK-native must not cover SLH-DSA")
+	})
+
+	t.Run("SunEC serves neither ML-KEM nor ML-DSA → no match", func(t *testing.T) {
+		if p, ok := registry.MatchProvider("SunEC", sigs); ok {
+			t.Errorf("SunEC matched %+v; it is the EC provider", p)
 		}
 	})
 
