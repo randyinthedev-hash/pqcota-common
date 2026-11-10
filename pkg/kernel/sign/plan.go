@@ -107,6 +107,10 @@ func SignApproval(privB64, approver string, p *provisioningv1.FinalizedPlan) (st
 	if len(sk) != ed25519.PrivateKeySize {
 		return "", fmt.Errorf("the private key is %d bytes, which is not an ed25519 private key (%d)", len(sk), ed25519.PrivateKeySize)
 	}
+	// 정규형이 모호한 계획에는 서명하지 않는다 — 그 서명은 다른 계획에서도 통과한다([CheckPlanText]).
+	if err := CheckPlanText(p); err != nil {
+		return "", err
+	}
 	sig := ed25519.Sign(ed25519.PrivateKey(sk), CanonicalPlan(p))
 	return approver + ":" + Prefix + base64.StdEncoding.EncodeToString(sig), nil
 }
@@ -141,8 +145,23 @@ type ApprovalCheck struct {
 //
 // GATE: 배선 필수
 func VerifyApprovals(keys map[string]string, p *provisioningv1.FinalizedPlan) ApprovalCheck {
-	msg := CanonicalPlan(p)
 	var out ApprovalCheck
+	// 정규형이 모호한 계획에서는 어떤 서명도 이 계획의 승인이라고 말할 수 없다. 서명이 맞더라도 다른
+	// 계획에 한 것일 수 있다. 그래서 승인 항목을 모두 거부로 돌리고, 승인됨은 하나도 남기지 않는다.
+	if err := CheckPlanText(p); err != nil {
+		for _, raw := range p.GetApprovalSignatures() {
+			approver := strings.TrimSpace(raw)
+			if a, _, ok := splitApproval(approver); ok {
+				approver = a
+			}
+			out.Rejected = append(out.Rejected, RejectedApproval{approver, err.Error()})
+		}
+		if len(out.Rejected) == 0 {
+			out.Rejected = append(out.Rejected, RejectedApproval{"(none)", err.Error()})
+		}
+		return out
+	}
+	msg := CanonicalPlan(p)
 	for _, raw := range p.GetApprovalSignatures() {
 		s := strings.TrimSpace(raw)
 		approver, sig, ok := splitApproval(s)
