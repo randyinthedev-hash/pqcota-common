@@ -119,6 +119,27 @@ message RemediationAction {
   // (APP_RECONFIG·REBUILD)에서만 받고, 생성기는 다른 종류를 거부한다. 순서는 뜻이 있다(앞이 주 근거).
   // 승인 서명이 이 목록과 그것이 붙은 조치를 함께 덮는다. 비어 있으면 정규형은 이 필드가 생기기 전과 같다.
   repeated SourceEvidenceReference source_evidence = 15;
+  // 계획 작성자가 고르고 승인받은 가이드. 하나 또는 없음. 승인 서명이 이 선택과 그것이 붙은 조치를 함께 덮는다 —
+  // 바꾸거나 다른 조치로 옮기면 다시 승인한다. 생성기·승인은 로컬 판별 카탈로그에서 매니페스트·본문·예제를 해시로
+  // 대조하고, 맞지 않으면 그 가이드에 기대는 안내를 내지 않는다(최신판으로 바꾸지 않는다). 없으면 정규형은 이 필드가
+  // 생기기 전과 같다.
+  GuideSelection guide = 16;
+}
+
+// GuideSelection — 승인한 가이드의 정확한 판과, 그것을 고른 근거.
+message GuideSelection {
+  string guide_id = 1;        // 예: "pqcota-guide/jca-doc-key-transport-mlkem"
+  string revision = 2;        // 1~6자리 숫자. 같은 판의 내용을 바꾸지 않는다
+  string body_sha256 = 3;     // 본문의 SHA-256(소문자 16진수 64자)
+  string purpose = 4;         // 작성자가 확인한 암호 용도. 매니페스트의 purposes 가운데 하나여야 한다
+  repeated string conditions = 5; // 작성자가 확인한 적용 조건. 순서는 뜻이 있다
+  string rationale = 6;       // 왜 이 가이드인가. 사람이 읽는다
+  // 이 가이드를 고른 근거 — 이 조치의 evidence_sources·source_evidence 안의 순번(오름차순, 중복 없음).
+  // 둘 다 비면 위치를 특정하지 않은 일반 가이드다. 소스 근거만 있는 조치는 런타임 순번을 가질 수 없다.
+  repeated uint32 evidence_source_indexes = 7;
+  repeated uint32 source_evidence_indexes = 8;
+  // 카탈로그 매니페스트(guide.json)의 SHA-256. 제목·다루는 용도·관측 한계·예제 목록(경로·해시)을 고정한다.
+  string manifest_sha256 = 9;
 }
 
 // SourceEvidenceReference — 저장된 불변 변환 결과 안의 근거 항목 하나. 변환 결과는 원본 CBOM·적용한 규칙·

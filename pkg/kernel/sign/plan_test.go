@@ -205,7 +205,8 @@ func TestTamperBreaksApproval(t *testing.T) {
 func TestCanonicalPlanCoversAllFields(t *testing.T) {
 	want := map[string]int{
 		"FinalizedPlan":            8,  // 그중 approval_signatures는 서명 대상에서 제외(자기 자신)
-		"RemediationAction":        15, // id, node, finding, runtime, kind, level, target, provider, artifact, note, priority, class, activation, evidence_sources, source_evidence
+		"RemediationAction":        16, // id, node, finding, runtime, kind, level, target, provider, artifact, note, priority, class, activation, evidence_sources, source_evidence, guide
+		"GuideSelection":           9,  // guide_id, revision, body_sha256, purpose, conditions, rationale, evidence_source_indexes, source_evidence_indexes, manifest_sha256
 		"SourceEvidenceReference":  4,  // interpretation_id, item_id, location_id, input_sha256
 		"ActivationHooks":          4,  // pre, activate, deactivate, restart
 		"ActionEvidenceSource":     2,  // finding_id, snapshot
@@ -216,6 +217,7 @@ func TestCanonicalPlanCoversAllFields(t *testing.T) {
 		"FinalizedPlan":            (&provisioningv1.FinalizedPlan{}).ProtoReflect().Descriptor().Fields().Len(),
 		"RemediationAction":        (&provisioningv1.RemediationAction{}).ProtoReflect().Descriptor().Fields().Len(),
 		"SourceEvidenceReference":  (&provisioningv1.SourceEvidenceReference{}).ProtoReflect().Descriptor().Fields().Len(),
+		"GuideSelection":           (&provisioningv1.GuideSelection{}).ProtoReflect().Descriptor().Fields().Len(),
 		"ActivationHooks":          (&provisioningv1.ActivationHooks{}).ProtoReflect().Descriptor().Fields().Len(),
 		"ActionEvidenceSource":     (&provisioningv1.ActionEvidenceSource{}).ProtoReflect().Descriptor().Fields().Len(),
 		"SnapshotReference":        (&provisioningv1.SnapshotReference{}).ProtoReflect().Descriptor().Fields().Len(),

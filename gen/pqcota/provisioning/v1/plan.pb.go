@@ -340,8 +340,13 @@ type RemediationAction struct {
 	// (APP_RECONFIG·REBUILD)에서만 받고, 생성기는 다른 종류를 거부한다. 순서는 뜻이 있다(앞이 주 근거).
 	// 승인 서명이 이 목록과 그것이 붙은 조치를 함께 덮는다. 비어 있으면 정규형은 이 필드가 생기기 전과 같다.
 	SourceEvidence []*SourceEvidenceReference `protobuf:"bytes,15,rep,name=source_evidence,json=sourceEvidence,proto3" json:"source_evidence,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 계획 작성자가 고르고 승인받은 가이드. 하나 또는 없음. 승인 서명이 이 선택과 그것이 붙은 조치를 함께 덮는다 —
+	// 바꾸거나 다른 조치로 옮기면 다시 승인한다. 생성기·승인은 로컬 판별 카탈로그에서 매니페스트·본문·예제를 해시로
+	// 대조하고, 맞지 않으면 그 가이드에 기대는 안내를 내지 않는다(최신판으로 바꾸지 않는다). 없으면 정규형은 이 필드가
+	// 생기기 전과 같다.
+	Guide         *GuideSelection `protobuf:"bytes,16,opt,name=guide,proto3" json:"guide,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemediationAction) Reset() {
@@ -479,6 +484,125 @@ func (x *RemediationAction) GetSourceEvidence() []*SourceEvidenceReference {
 	return nil
 }
 
+func (x *RemediationAction) GetGuide() *GuideSelection {
+	if x != nil {
+		return x.Guide
+	}
+	return nil
+}
+
+// GuideSelection — 승인한 가이드의 정확한 판과, 그것을 고른 근거.
+type GuideSelection struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	GuideId    string                 `protobuf:"bytes,1,opt,name=guide_id,json=guideId,proto3" json:"guide_id,omitempty"`          // 예: "pqcota-guide/jca-doc-key-transport-mlkem"
+	Revision   string                 `protobuf:"bytes,2,opt,name=revision,proto3" json:"revision,omitempty"`                       // 1~6자리 숫자. 같은 판의 내용을 바꾸지 않는다
+	BodySha256 string                 `protobuf:"bytes,3,opt,name=body_sha256,json=bodySha256,proto3" json:"body_sha256,omitempty"` // 본문의 SHA-256(소문자 16진수 64자)
+	Purpose    string                 `protobuf:"bytes,4,opt,name=purpose,proto3" json:"purpose,omitempty"`                         // 작성자가 확인한 암호 용도. 매니페스트의 purposes 가운데 하나여야 한다
+	Conditions []string               `protobuf:"bytes,5,rep,name=conditions,proto3" json:"conditions,omitempty"`                   // 작성자가 확인한 적용 조건. 순서는 뜻이 있다
+	Rationale  string                 `protobuf:"bytes,6,opt,name=rationale,proto3" json:"rationale,omitempty"`                     // 왜 이 가이드인가. 사람이 읽는다
+	// 이 가이드를 고른 근거 — 이 조치의 evidence_sources·source_evidence 안의 순번(오름차순, 중복 없음).
+	// 둘 다 비면 위치를 특정하지 않은 일반 가이드다. 소스 근거만 있는 조치는 런타임 순번을 가질 수 없다.
+	EvidenceSourceIndexes []uint32 `protobuf:"varint,7,rep,packed,name=evidence_source_indexes,json=evidenceSourceIndexes,proto3" json:"evidence_source_indexes,omitempty"`
+	SourceEvidenceIndexes []uint32 `protobuf:"varint,8,rep,packed,name=source_evidence_indexes,json=sourceEvidenceIndexes,proto3" json:"source_evidence_indexes,omitempty"`
+	// 카탈로그 매니페스트(guide.json)의 SHA-256. 제목·다루는 용도·관측 한계·예제 목록(경로·해시)을 고정한다.
+	ManifestSha256 string `protobuf:"bytes,9,opt,name=manifest_sha256,json=manifestSha256,proto3" json:"manifest_sha256,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GuideSelection) Reset() {
+	*x = GuideSelection{}
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GuideSelection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GuideSelection) ProtoMessage() {}
+
+func (x *GuideSelection) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GuideSelection.ProtoReflect.Descriptor instead.
+func (*GuideSelection) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GuideSelection) GetGuideId() string {
+	if x != nil {
+		return x.GuideId
+	}
+	return ""
+}
+
+func (x *GuideSelection) GetRevision() string {
+	if x != nil {
+		return x.Revision
+	}
+	return ""
+}
+
+func (x *GuideSelection) GetBodySha256() string {
+	if x != nil {
+		return x.BodySha256
+	}
+	return ""
+}
+
+func (x *GuideSelection) GetPurpose() string {
+	if x != nil {
+		return x.Purpose
+	}
+	return ""
+}
+
+func (x *GuideSelection) GetConditions() []string {
+	if x != nil {
+		return x.Conditions
+	}
+	return nil
+}
+
+func (x *GuideSelection) GetRationale() string {
+	if x != nil {
+		return x.Rationale
+	}
+	return ""
+}
+
+func (x *GuideSelection) GetEvidenceSourceIndexes() []uint32 {
+	if x != nil {
+		return x.EvidenceSourceIndexes
+	}
+	return nil
+}
+
+func (x *GuideSelection) GetSourceEvidenceIndexes() []uint32 {
+	if x != nil {
+		return x.SourceEvidenceIndexes
+	}
+	return nil
+}
+
+func (x *GuideSelection) GetManifestSha256() string {
+	if x != nil {
+		return x.ManifestSha256
+	}
+	return ""
+}
+
 // SourceEvidenceReference — 저장된 불변 변환 결과 안의 근거 항목 하나. 변환 결과는 원본 CBOM·적용한 규칙·
 // 매핑 설정 원문·변환기 판에 묶여 있어, 같은 id는 같은 해석을 가리킨다.
 type SourceEvidenceReference struct {
@@ -497,7 +621,7 @@ type SourceEvidenceReference struct {
 
 func (x *SourceEvidenceReference) Reset() {
 	*x = SourceEvidenceReference{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +633,7 @@ func (x *SourceEvidenceReference) String() string {
 func (*SourceEvidenceReference) ProtoMessage() {}
 
 func (x *SourceEvidenceReference) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,7 +646,7 @@ func (x *SourceEvidenceReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SourceEvidenceReference.ProtoReflect.Descriptor instead.
 func (*SourceEvidenceReference) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SourceEvidenceReference) GetInterpretationId() string {
@@ -566,7 +690,7 @@ type ActionEvidenceSource struct {
 
 func (x *ActionEvidenceSource) Reset() {
 	*x = ActionEvidenceSource{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -578,7 +702,7 @@ func (x *ActionEvidenceSource) String() string {
 func (*ActionEvidenceSource) ProtoMessage() {}
 
 func (x *ActionEvidenceSource) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -591,7 +715,7 @@ func (x *ActionEvidenceSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionEvidenceSource.ProtoReflect.Descriptor instead.
 func (*ActionEvidenceSource) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{3}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ActionEvidenceSource) GetFindingId() string {
@@ -628,7 +752,7 @@ type SnapshotReference struct {
 
 func (x *SnapshotReference) Reset() {
 	*x = SnapshotReference{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -640,7 +764,7 @@ func (x *SnapshotReference) String() string {
 func (*SnapshotReference) ProtoMessage() {}
 
 func (x *SnapshotReference) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -653,7 +777,7 @@ func (x *SnapshotReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReference.ProtoReflect.Descriptor instead.
 func (*SnapshotReference) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{4}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SnapshotReference) GetSourceNodeId() string {
@@ -718,7 +842,7 @@ type SnapshotContentReference struct {
 
 func (x *SnapshotContentReference) Reset() {
 	*x = SnapshotContentReference{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +854,7 @@ func (x *SnapshotContentReference) String() string {
 func (*SnapshotContentReference) ProtoMessage() {}
 
 func (x *SnapshotContentReference) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +867,7 @@ func (x *SnapshotContentReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotContentReference.ProtoReflect.Descriptor instead.
 func (*SnapshotContentReference) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{5}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SnapshotContentReference) GetFormatVersion() string {
@@ -794,7 +918,7 @@ type FinalizedPlan struct {
 
 func (x *FinalizedPlan) Reset() {
 	*x = FinalizedPlan{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -806,7 +930,7 @@ func (x *FinalizedPlan) String() string {
 func (*FinalizedPlan) ProtoMessage() {}
 
 func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +943,7 @@ func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizedPlan.ProtoReflect.Descriptor instead.
 func (*FinalizedPlan) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{6}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *FinalizedPlan) GetId() string {
@@ -889,7 +1013,7 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\n" +
 	"deactivate\x18\x03 \x01(\tR\n" +
 	"deactivate\x12\x18\n" +
-	"\arestart\x18\x04 \x01(\tR\arestart\"\xa8\x06\n" +
+	"\arestart\x18\x04 \x01(\tR\arestart\"\xe6\x06\n" +
 	"\x11RemediationAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12$\n" +
 	"\x0etarget_node_id\x18\x02 \x01(\tR\ftargetNodeId\x12\x1d\n" +
@@ -909,7 +1033,21 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"activation\x18\r \x01(\v2'.pqcota.provisioning.v1.ActivationHooksR\n" +
 	"activation\x12W\n" +
 	"\x10evidence_sources\x18\x0e \x03(\v2,.pqcota.provisioning.v1.ActionEvidenceSourceR\x0fevidenceSources\x12X\n" +
-	"\x0fsource_evidence\x18\x0f \x03(\v2/.pqcota.provisioning.v1.SourceEvidenceReferenceR\x0esourceEvidence\"\xa3\x01\n" +
+	"\x0fsource_evidence\x18\x0f \x03(\v2/.pqcota.provisioning.v1.SourceEvidenceReferenceR\x0esourceEvidence\x12<\n" +
+	"\x05guide\x18\x10 \x01(\v2&.pqcota.provisioning.v1.GuideSelectionR\x05guide\"\xd9\x02\n" +
+	"\x0eGuideSelection\x12\x19\n" +
+	"\bguide_id\x18\x01 \x01(\tR\aguideId\x12\x1a\n" +
+	"\brevision\x18\x02 \x01(\tR\brevision\x12\x1f\n" +
+	"\vbody_sha256\x18\x03 \x01(\tR\n" +
+	"bodySha256\x12\x18\n" +
+	"\apurpose\x18\x04 \x01(\tR\apurpose\x12\x1e\n" +
+	"\n" +
+	"conditions\x18\x05 \x03(\tR\n" +
+	"conditions\x12\x1c\n" +
+	"\trationale\x18\x06 \x01(\tR\trationale\x126\n" +
+	"\x17evidence_source_indexes\x18\a \x03(\rR\x15evidenceSourceIndexes\x126\n" +
+	"\x17source_evidence_indexes\x18\b \x03(\rR\x15sourceEvidenceIndexes\x12'\n" +
+	"\x0fmanifest_sha256\x18\t \x01(\tR\x0emanifestSha256\"\xa3\x01\n" +
 	"\x17SourceEvidenceReference\x12+\n" +
 	"\x11interpretation_id\x18\x01 \x01(\tR\x10interpretationId\x12\x17\n" +
 	"\aitem_id\x18\x02 \x01(\tR\x06itemId\x12\x1f\n" +
@@ -974,38 +1112,40 @@ func file_pqcota_provisioning_v1_plan_proto_rawDescGZIP() []byte {
 }
 
 var file_pqcota_provisioning_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_pqcota_provisioning_v1_plan_proto_goTypes = []any{
 	(DeployAutomationLevel)(0),       // 0: pqcota.provisioning.v1.DeployAutomationLevel
 	(PlanStatus)(0),                  // 1: pqcota.provisioning.v1.PlanStatus
 	(RemediationKind)(0),             // 2: pqcota.provisioning.v1.RemediationKind
 	(*ActivationHooks)(nil),          // 3: pqcota.provisioning.v1.ActivationHooks
 	(*RemediationAction)(nil),        // 4: pqcota.provisioning.v1.RemediationAction
-	(*SourceEvidenceReference)(nil),  // 5: pqcota.provisioning.v1.SourceEvidenceReference
-	(*ActionEvidenceSource)(nil),     // 6: pqcota.provisioning.v1.ActionEvidenceSource
-	(*SnapshotReference)(nil),        // 7: pqcota.provisioning.v1.SnapshotReference
-	(*SnapshotContentReference)(nil), // 8: pqcota.provisioning.v1.SnapshotContentReference
-	(*FinalizedPlan)(nil),            // 9: pqcota.provisioning.v1.FinalizedPlan
-	(v1.CryptoRuntime)(0),            // 10: pqcota.common.v1.CryptoRuntime
-	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
+	(*GuideSelection)(nil),           // 5: pqcota.provisioning.v1.GuideSelection
+	(*SourceEvidenceReference)(nil),  // 6: pqcota.provisioning.v1.SourceEvidenceReference
+	(*ActionEvidenceSource)(nil),     // 7: pqcota.provisioning.v1.ActionEvidenceSource
+	(*SnapshotReference)(nil),        // 8: pqcota.provisioning.v1.SnapshotReference
+	(*SnapshotContentReference)(nil), // 9: pqcota.provisioning.v1.SnapshotContentReference
+	(*FinalizedPlan)(nil),            // 10: pqcota.provisioning.v1.FinalizedPlan
+	(v1.CryptoRuntime)(0),            // 11: pqcota.common.v1.CryptoRuntime
+	(*timestamppb.Timestamp)(nil),    // 12: google.protobuf.Timestamp
 }
 var file_pqcota_provisioning_v1_plan_proto_depIdxs = []int32{
-	10, // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
+	11, // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
 	2,  // 1: pqcota.provisioning.v1.RemediationAction.kind:type_name -> pqcota.provisioning.v1.RemediationKind
 	0,  // 2: pqcota.provisioning.v1.RemediationAction.automation_level:type_name -> pqcota.provisioning.v1.DeployAutomationLevel
 	3,  // 3: pqcota.provisioning.v1.RemediationAction.activation:type_name -> pqcota.provisioning.v1.ActivationHooks
-	6,  // 4: pqcota.provisioning.v1.RemediationAction.evidence_sources:type_name -> pqcota.provisioning.v1.ActionEvidenceSource
-	5,  // 5: pqcota.provisioning.v1.RemediationAction.source_evidence:type_name -> pqcota.provisioning.v1.SourceEvidenceReference
-	7,  // 6: pqcota.provisioning.v1.ActionEvidenceSource.snapshot:type_name -> pqcota.provisioning.v1.SnapshotReference
-	8,  // 7: pqcota.provisioning.v1.SnapshotReference.content:type_name -> pqcota.provisioning.v1.SnapshotContentReference
-	1,  // 8: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
-	4,  // 9: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
-	11, // 10: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	7,  // 4: pqcota.provisioning.v1.RemediationAction.evidence_sources:type_name -> pqcota.provisioning.v1.ActionEvidenceSource
+	6,  // 5: pqcota.provisioning.v1.RemediationAction.source_evidence:type_name -> pqcota.provisioning.v1.SourceEvidenceReference
+	5,  // 6: pqcota.provisioning.v1.RemediationAction.guide:type_name -> pqcota.provisioning.v1.GuideSelection
+	8,  // 7: pqcota.provisioning.v1.ActionEvidenceSource.snapshot:type_name -> pqcota.provisioning.v1.SnapshotReference
+	9,  // 8: pqcota.provisioning.v1.SnapshotReference.content:type_name -> pqcota.provisioning.v1.SnapshotContentReference
+	1,  // 9: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
+	4,  // 10: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
+	12, // 11: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_provisioning_v1_plan_proto_init() }
@@ -1013,7 +1153,7 @@ func file_pqcota_provisioning_v1_plan_proto_init() {
 	if File_pqcota_provisioning_v1_plan_proto != nil {
 		return
 	}
-	file_pqcota_provisioning_v1_plan_proto_msgTypes[4].OneofWrappers = []any{
+	file_pqcota_provisioning_v1_plan_proto_msgTypes[5].OneofWrappers = []any{
 		(*SnapshotReference_SnapshotId)(nil),
 		(*SnapshotReference_Content)(nil),
 	}
@@ -1023,7 +1163,7 @@ func file_pqcota_provisioning_v1_plan_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_provisioning_v1_plan_proto_rawDesc), len(file_pqcota_provisioning_v1_plan_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

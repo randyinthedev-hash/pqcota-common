@@ -60,6 +60,18 @@ message ProvisioningRecord {
   // 이 조치의 소스 근거(RemediationAction.source_evidence)를 소스 근거 저장소에서 찾은 결과. 소스 근거가 있는
   // 조치에서만 채운다 — 없는 조치의 기록은 이 필드가 생기기 전과 같은 JSON이다(옛 판이 같은 DB를 읽어도 깨지지 않게).
   repeated SourceEvidenceResolution source_evidence_resolutions = 12;
+  // 이 조치의 가이드(RemediationAction.guide)를 카탈로그에서 대조한 결과. 가이드가 있는 조치에서만 채운다.
+  GuideResolution guide_resolution = 13;
+}
+
+// GuideResolution — 가이드 하나를 로컬 카탈로그와 대조한 결과.
+message GuideResolution {
+  GuideSelection submitted = 1;
+  bool resolved = 2;               // 매니페스트·본문·예제·용도·고른 근거가 모두 맞았다
+  string reason = 3;               // 맞지 않을 때 사람이 읽는 이유
+  string body_sha256_found = 4;    // 카탈로그에서 잰 본문 해시(찾았을 때)
+  string manifest_sha256_found = 5; // 카탈로그에서 잰 매니페스트 해시(찾았을 때)
+  bool approvals_verified = 6;     // 이 실행이 승인 서명을 검증했나. 아니면 「승인한 가이드」라고 말하지 않는다
 }
 
 // SnapshotResolution — 참조 하나가 어떻게 해결됐나.

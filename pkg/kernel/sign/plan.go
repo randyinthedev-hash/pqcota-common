@@ -77,9 +77,16 @@ func actionCanon(w func(string), a *provisioningv1.RemediationAction) {
 	// 소스 근거는 필드 넷으로 고정이라 조치 하나가 여전히 스스로 끝을 안다 — 다음 조치의 id와 섞이지 않는다.
 	// 표지 문자열을 조치 끝에 덧붙이지 않는 이유: NUL 말고는 어떤 문자열도 다음 조치의 id가 될 수 있다.
 	// 소스 근거가 이 조치의 정규형 안에 있으므로, 다른 조치로 옮기면 바이트가 달라진다.
+	//
+	// 가이드(guide)가 있으면 같은 자리를 "N+M+1"로 한 번 더 넓히고(M은 0일 수 있다) 소스 근거 다음에 가이드 하나를
+	// 적는다. 지금 그 자리에 오는 값은 "N"과 "N+M"뿐이라 겹치지 않는다. 가이드의 반복 필드는 개수를 앞에 적는다.
 	count := strconv.Itoa(len(a.GetEvidenceSources()))
-	if n := len(a.GetSourceEvidence()); n > 0 {
-		count += "+" + strconv.Itoa(n)
+	g := a.GetGuide()
+	switch {
+	case g != nil:
+		count += "+" + strconv.Itoa(len(a.GetSourceEvidence())) + "+1"
+	case len(a.GetSourceEvidence()) > 0:
+		count += "+" + strconv.Itoa(len(a.GetSourceEvidence()))
 	}
 	w(count)
 	for _, e := range a.GetEvidenceSources() {
@@ -104,6 +111,26 @@ func actionCanon(w func(string), a *provisioningv1.RemediationAction) {
 		w(r.GetItemId())
 		w(r.GetLocationId())
 		w(r.GetInputSha256())
+	}
+	if g != nil {
+		w(g.GetGuideId())
+		w(g.GetRevision())
+		w(g.GetBodySha256())
+		w(g.GetManifestSha256())
+		w(g.GetPurpose())
+		w(strconv.Itoa(len(g.GetConditions())))
+		for _, c := range g.GetConditions() {
+			w(c)
+		}
+		w(g.GetRationale())
+		w(strconv.Itoa(len(g.GetEvidenceSourceIndexes())))
+		for _, i := range g.GetEvidenceSourceIndexes() {
+			w(strconv.FormatUint(uint64(i), 10))
+		}
+		w(strconv.Itoa(len(g.GetSourceEvidenceIndexes())))
+		for _, i := range g.GetSourceEvidenceIndexes() {
+			w(strconv.FormatUint(uint64(i), 10))
+		}
 	}
 }
 
