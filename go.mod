@@ -2,7 +2,7 @@ module github.com/randyinthedev-hash/pqcota-common
 
 go 1.26.4
 
-toolchain go1.26.10
+toolchain go1.26.11
 
 require (
 	golang.org/x/sys v0.49.0
