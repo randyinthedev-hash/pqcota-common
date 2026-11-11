@@ -334,8 +334,14 @@ type RemediationAction struct {
 	// 스냅샷만 여럿 두면 finding_id가 하나라 둘째 스냅샷의 어느 finding이 근거인지 말할 수 없기
 	// 때문이다. 비어 있으면 생성기가 계획 단위 derived_from_snapshot_id를 호환 경로로 읽는다.
 	EvidenceSources []*ActionEvidenceSource `protobuf:"bytes,14,rep,name=evidence_sources,json=evidenceSources,proto3" json:"evidence_sources,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// 이 조치의 소스 근거 — 외부 CBOM에서 변환해 저장한 근거 항목(과 선택적으로 위치). evidence_sources(런타임
+	// finding)와 따로 둔다. 둘 다 있어도 되고 하나만 있어도 된다. **소스 근거만 있으면** finding_id와
+	// evidence_sources를 비운다 — 가짜 런타임 finding을 만들지 않는다. 이 꼴은 코드·빌드를 고치는 조치
+	// (APP_RECONFIG·REBUILD)에서만 받고, 생성기는 다른 종류를 거부한다. 순서는 뜻이 있다(앞이 주 근거).
+	// 승인 서명이 이 목록과 그것이 붙은 조치를 함께 덮는다. 비어 있으면 정규형은 이 필드가 생기기 전과 같다.
+	SourceEvidence []*SourceEvidenceReference `protobuf:"bytes,15,rep,name=source_evidence,json=sourceEvidence,proto3" json:"source_evidence,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RemediationAction) Reset() {
@@ -466,6 +472,87 @@ func (x *RemediationAction) GetEvidenceSources() []*ActionEvidenceSource {
 	return nil
 }
 
+func (x *RemediationAction) GetSourceEvidence() []*SourceEvidenceReference {
+	if x != nil {
+		return x.SourceEvidence
+	}
+	return nil
+}
+
+// SourceEvidenceReference — 저장된 불변 변환 결과 안의 근거 항목 하나. 변환 결과는 원본 CBOM·적용한 규칙·
+// 매핑 설정 원문·변환기 판에 묶여 있어, 같은 id는 같은 해석을 가리킨다.
+type SourceEvidenceReference struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	InterpretationId string                 `protobuf:"bytes,1,opt,name=interpretation_id,json=interpretationId,proto3" json:"interpretation_id,omitempty"` // 변환 결과의 id. 비울 수 없다
+	ItemId           string                 `protobuf:"bytes,2,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`                               // 근거 항목의 id. 그 변환 결과 안에 있어야 한다. 비울 수 없다
+	// 위치의 id. **비면 항목 전체**를 가리킨다(어느 위치인지 고르지 않았다). 있으면 그 항목의 위치 하나다.
+	// 위치 여럿은 같은 항목으로 원소를 여럿 둔다.
+	LocationId string `protobuf:"bytes,3,opt,name=location_id,json=locationId,proto3" json:"location_id,omitempty"`
+	// 원본 CBOM의 SHA-256(소문자 16진수 64자). 변환 결과의 입력 해시와 같아야 한다. 같은 CBOM을 가리키는지
+	// 보는 값이지 진실성·서명 검증이 아니다.
+	InputSha256   string `protobuf:"bytes,4,opt,name=input_sha256,json=inputSha256,proto3" json:"input_sha256,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceEvidenceReference) Reset() {
+	*x = SourceEvidenceReference{}
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceEvidenceReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceEvidenceReference) ProtoMessage() {}
+
+func (x *SourceEvidenceReference) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceEvidenceReference.ProtoReflect.Descriptor instead.
+func (*SourceEvidenceReference) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SourceEvidenceReference) GetInterpretationId() string {
+	if x != nil {
+		return x.InterpretationId
+	}
+	return ""
+}
+
+func (x *SourceEvidenceReference) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *SourceEvidenceReference) GetLocationId() string {
+	if x != nil {
+		return x.LocationId
+	}
+	return ""
+}
+
+func (x *SourceEvidenceReference) GetInputSha256() string {
+	if x != nil {
+		return x.InputSha256
+	}
+	return ""
+}
+
 // ActionEvidenceSource — 조치의 근거 하나.
 type ActionEvidenceSource struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -479,7 +566,7 @@ type ActionEvidenceSource struct {
 
 func (x *ActionEvidenceSource) Reset() {
 	*x = ActionEvidenceSource{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -491,7 +578,7 @@ func (x *ActionEvidenceSource) String() string {
 func (*ActionEvidenceSource) ProtoMessage() {}
 
 func (x *ActionEvidenceSource) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[2]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -504,7 +591,7 @@ func (x *ActionEvidenceSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionEvidenceSource.ProtoReflect.Descriptor instead.
 func (*ActionEvidenceSource) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{2}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ActionEvidenceSource) GetFindingId() string {
@@ -541,7 +628,7 @@ type SnapshotReference struct {
 
 func (x *SnapshotReference) Reset() {
 	*x = SnapshotReference{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -553,7 +640,7 @@ func (x *SnapshotReference) String() string {
 func (*SnapshotReference) ProtoMessage() {}
 
 func (x *SnapshotReference) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[3]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -566,7 +653,7 @@ func (x *SnapshotReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotReference.ProtoReflect.Descriptor instead.
 func (*SnapshotReference) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{3}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SnapshotReference) GetSourceNodeId() string {
@@ -631,7 +718,7 @@ type SnapshotContentReference struct {
 
 func (x *SnapshotContentReference) Reset() {
 	*x = SnapshotContentReference{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +730,7 @@ func (x *SnapshotContentReference) String() string {
 func (*SnapshotContentReference) ProtoMessage() {}
 
 func (x *SnapshotContentReference) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[4]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +743,7 @@ func (x *SnapshotContentReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SnapshotContentReference.ProtoReflect.Descriptor instead.
 func (*SnapshotContentReference) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{4}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SnapshotContentReference) GetFormatVersion() string {
@@ -707,7 +794,7 @@ type FinalizedPlan struct {
 
 func (x *FinalizedPlan) Reset() {
 	*x = FinalizedPlan{}
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -719,7 +806,7 @@ func (x *FinalizedPlan) String() string {
 func (*FinalizedPlan) ProtoMessage() {}
 
 func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[5]
+	mi := &file_pqcota_provisioning_v1_plan_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -732,7 +819,7 @@ func (x *FinalizedPlan) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FinalizedPlan.ProtoReflect.Descriptor instead.
 func (*FinalizedPlan) Descriptor() ([]byte, []int) {
-	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{5}
+	return file_pqcota_provisioning_v1_plan_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *FinalizedPlan) GetId() string {
@@ -802,7 +889,7 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\n" +
 	"deactivate\x18\x03 \x01(\tR\n" +
 	"deactivate\x12\x18\n" +
-	"\arestart\x18\x04 \x01(\tR\arestart\"\xce\x05\n" +
+	"\arestart\x18\x04 \x01(\tR\arestart\"\xa8\x06\n" +
 	"\x11RemediationAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12$\n" +
 	"\x0etarget_node_id\x18\x02 \x01(\tR\ftargetNodeId\x12\x1d\n" +
@@ -821,7 +908,14 @@ const file_pqcota_provisioning_v1_plan_proto_rawDesc = "" +
 	"\n" +
 	"activation\x18\r \x01(\v2'.pqcota.provisioning.v1.ActivationHooksR\n" +
 	"activation\x12W\n" +
-	"\x10evidence_sources\x18\x0e \x03(\v2,.pqcota.provisioning.v1.ActionEvidenceSourceR\x0fevidenceSources\"|\n" +
+	"\x10evidence_sources\x18\x0e \x03(\v2,.pqcota.provisioning.v1.ActionEvidenceSourceR\x0fevidenceSources\x12X\n" +
+	"\x0fsource_evidence\x18\x0f \x03(\v2/.pqcota.provisioning.v1.SourceEvidenceReferenceR\x0esourceEvidence\"\xa3\x01\n" +
+	"\x17SourceEvidenceReference\x12+\n" +
+	"\x11interpretation_id\x18\x01 \x01(\tR\x10interpretationId\x12\x17\n" +
+	"\aitem_id\x18\x02 \x01(\tR\x06itemId\x12\x1f\n" +
+	"\vlocation_id\x18\x03 \x01(\tR\n" +
+	"locationId\x12!\n" +
+	"\finput_sha256\x18\x04 \x01(\tR\vinputSha256\"|\n" +
 	"\x14ActionEvidenceSource\x12\x1d\n" +
 	"\n" +
 	"finding_id\x18\x01 \x01(\tR\tfindingId\x12E\n" +
@@ -880,36 +974,38 @@ func file_pqcota_provisioning_v1_plan_proto_rawDescGZIP() []byte {
 }
 
 var file_pqcota_provisioning_v1_plan_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_pqcota_provisioning_v1_plan_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_pqcota_provisioning_v1_plan_proto_goTypes = []any{
 	(DeployAutomationLevel)(0),       // 0: pqcota.provisioning.v1.DeployAutomationLevel
 	(PlanStatus)(0),                  // 1: pqcota.provisioning.v1.PlanStatus
 	(RemediationKind)(0),             // 2: pqcota.provisioning.v1.RemediationKind
 	(*ActivationHooks)(nil),          // 3: pqcota.provisioning.v1.ActivationHooks
 	(*RemediationAction)(nil),        // 4: pqcota.provisioning.v1.RemediationAction
-	(*ActionEvidenceSource)(nil),     // 5: pqcota.provisioning.v1.ActionEvidenceSource
-	(*SnapshotReference)(nil),        // 6: pqcota.provisioning.v1.SnapshotReference
-	(*SnapshotContentReference)(nil), // 7: pqcota.provisioning.v1.SnapshotContentReference
-	(*FinalizedPlan)(nil),            // 8: pqcota.provisioning.v1.FinalizedPlan
-	(v1.CryptoRuntime)(0),            // 9: pqcota.common.v1.CryptoRuntime
-	(*timestamppb.Timestamp)(nil),    // 10: google.protobuf.Timestamp
+	(*SourceEvidenceReference)(nil),  // 5: pqcota.provisioning.v1.SourceEvidenceReference
+	(*ActionEvidenceSource)(nil),     // 6: pqcota.provisioning.v1.ActionEvidenceSource
+	(*SnapshotReference)(nil),        // 7: pqcota.provisioning.v1.SnapshotReference
+	(*SnapshotContentReference)(nil), // 8: pqcota.provisioning.v1.SnapshotContentReference
+	(*FinalizedPlan)(nil),            // 9: pqcota.provisioning.v1.FinalizedPlan
+	(v1.CryptoRuntime)(0),            // 10: pqcota.common.v1.CryptoRuntime
+	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_pqcota_provisioning_v1_plan_proto_depIdxs = []int32{
-	9,  // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
+	10, // 0: pqcota.provisioning.v1.RemediationAction.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
 	2,  // 1: pqcota.provisioning.v1.RemediationAction.kind:type_name -> pqcota.provisioning.v1.RemediationKind
 	0,  // 2: pqcota.provisioning.v1.RemediationAction.automation_level:type_name -> pqcota.provisioning.v1.DeployAutomationLevel
 	3,  // 3: pqcota.provisioning.v1.RemediationAction.activation:type_name -> pqcota.provisioning.v1.ActivationHooks
-	5,  // 4: pqcota.provisioning.v1.RemediationAction.evidence_sources:type_name -> pqcota.provisioning.v1.ActionEvidenceSource
-	6,  // 5: pqcota.provisioning.v1.ActionEvidenceSource.snapshot:type_name -> pqcota.provisioning.v1.SnapshotReference
-	7,  // 6: pqcota.provisioning.v1.SnapshotReference.content:type_name -> pqcota.provisioning.v1.SnapshotContentReference
-	1,  // 7: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
-	4,  // 8: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
-	10, // 9: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	6,  // 4: pqcota.provisioning.v1.RemediationAction.evidence_sources:type_name -> pqcota.provisioning.v1.ActionEvidenceSource
+	5,  // 5: pqcota.provisioning.v1.RemediationAction.source_evidence:type_name -> pqcota.provisioning.v1.SourceEvidenceReference
+	7,  // 6: pqcota.provisioning.v1.ActionEvidenceSource.snapshot:type_name -> pqcota.provisioning.v1.SnapshotReference
+	8,  // 7: pqcota.provisioning.v1.SnapshotReference.content:type_name -> pqcota.provisioning.v1.SnapshotContentReference
+	1,  // 8: pqcota.provisioning.v1.FinalizedPlan.status:type_name -> pqcota.provisioning.v1.PlanStatus
+	4,  // 9: pqcota.provisioning.v1.FinalizedPlan.actions:type_name -> pqcota.provisioning.v1.RemediationAction
+	11, // 10: pqcota.provisioning.v1.FinalizedPlan.finalized_at:type_name -> google.protobuf.Timestamp
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_provisioning_v1_plan_proto_init() }
@@ -917,7 +1013,7 @@ func file_pqcota_provisioning_v1_plan_proto_init() {
 	if File_pqcota_provisioning_v1_plan_proto != nil {
 		return
 	}
-	file_pqcota_provisioning_v1_plan_proto_msgTypes[3].OneofWrappers = []any{
+	file_pqcota_provisioning_v1_plan_proto_msgTypes[4].OneofWrappers = []any{
 		(*SnapshotReference_SnapshotId)(nil),
 		(*SnapshotReference_Content)(nil),
 	}
@@ -927,7 +1023,7 @@ func file_pqcota_provisioning_v1_plan_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_provisioning_v1_plan_proto_rawDesc), len(file_pqcota_provisioning_v1_plan_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

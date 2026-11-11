@@ -70,7 +70,18 @@ func actionCanon(w func(string), a *provisioningv1.RemediationAction) {
 	// 바꿔 넣을 수 있어 「되짚을 수 있다」가 보장이 아니게 된다. 빈 목록도 자리 하나(길이 0)를
 	// 차지하므로, 근거가 없던 옛 계획의 정규형은 이 필드가 생기기 전과 같지 않다 — 기존 승인이
 	// 전부 무효가 되는 이유다(릴리스 노트 v0.9.0).
-	w(strconv.Itoa(len(a.GetEvidenceSources())))
+	//
+	// 소스 근거(source_evidence)는 **같은 개수 자리**에 함께 적는다. 비어 있으면 그 자리는 지금처럼 숫자 하나라
+	// 옛 계획의 정규형이 한 바이트도 바뀌지 않는다(plan_golden_test.go). 있으면 "N+M"으로 적고 런타임 근거 N개
+	// 다음에 소스 근거 M개를 적는다. 그 자리에는 지금 strconv.Itoa의 숫자만 오므로 「+」가 든 값과 겹치지 않고,
+	// 소스 근거는 필드 넷으로 고정이라 조치 하나가 여전히 스스로 끝을 안다 — 다음 조치의 id와 섞이지 않는다.
+	// 표지 문자열을 조치 끝에 덧붙이지 않는 이유: NUL 말고는 어떤 문자열도 다음 조치의 id가 될 수 있다.
+	// 소스 근거가 이 조치의 정규형 안에 있으므로, 다른 조치로 옮기면 바이트가 달라진다.
+	count := strconv.Itoa(len(a.GetEvidenceSources()))
+	if n := len(a.GetSourceEvidence()); n > 0 {
+		count += "+" + strconv.Itoa(n)
+	}
+	w(count)
 	for _, e := range a.GetEvidenceSources() {
 		w(e.GetFindingId())
 		r := e.GetSnapshot()
@@ -87,6 +98,12 @@ func actionCanon(w func(string), a *provisioningv1.RemediationAction) {
 		default:
 			w("none")
 		}
+	}
+	for _, r := range a.GetSourceEvidence() {
+		w(r.GetInterpretationId())
+		w(r.GetItemId())
+		w(r.GetLocationId())
+		w(r.GetInputSha256())
 	}
 }
 

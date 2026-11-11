@@ -113,6 +113,25 @@ message RemediationAction {
   // 스냅샷만 여럿 두면 finding_id가 하나라 둘째 스냅샷의 어느 finding이 근거인지 말할 수 없기
   // 때문이다. 비어 있으면 생성기가 계획 단위 derived_from_snapshot_id를 호환 경로로 읽는다.
   repeated ActionEvidenceSource evidence_sources = 14;
+  // 이 조치의 소스 근거 — 외부 CBOM에서 변환해 저장한 근거 항목(과 선택적으로 위치). evidence_sources(런타임
+  // finding)와 따로 둔다. 둘 다 있어도 되고 하나만 있어도 된다. **소스 근거만 있으면** finding_id와
+  // evidence_sources를 비운다 — 가짜 런타임 finding을 만들지 않는다. 이 꼴은 코드·빌드를 고치는 조치
+  // (APP_RECONFIG·REBUILD)에서만 받고, 생성기는 다른 종류를 거부한다. 순서는 뜻이 있다(앞이 주 근거).
+  // 승인 서명이 이 목록과 그것이 붙은 조치를 함께 덮는다. 비어 있으면 정규형은 이 필드가 생기기 전과 같다.
+  repeated SourceEvidenceReference source_evidence = 15;
+}
+
+// SourceEvidenceReference — 저장된 불변 변환 결과 안의 근거 항목 하나. 변환 결과는 원본 CBOM·적용한 규칙·
+// 매핑 설정 원문·변환기 판에 묶여 있어, 같은 id는 같은 해석을 가리킨다.
+message SourceEvidenceReference {
+  string interpretation_id = 1; // 변환 결과의 id. 비울 수 없다
+  string item_id = 2;           // 근거 항목의 id. 그 변환 결과 안에 있어야 한다. 비울 수 없다
+  // 위치의 id. **비면 항목 전체**를 가리킨다(어느 위치인지 고르지 않았다). 있으면 그 항목의 위치 하나다.
+  // 위치 여럿은 같은 항목으로 원소를 여럿 둔다.
+  string location_id = 3;
+  // 원본 CBOM의 SHA-256(소문자 16진수 64자). 변환 결과의 입력 해시와 같아야 한다. 같은 CBOM을 가리키는지
+  // 보는 값이지 진실성·서명 검증이 아니다.
+  string input_sha256 = 4;
 }
 
 // ActionEvidenceSource — 조치의 근거 하나.

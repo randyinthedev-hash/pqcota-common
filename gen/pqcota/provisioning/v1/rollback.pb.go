@@ -181,8 +181,11 @@ type ProvisioningRecord struct {
 	// 짝지어 남긴다 — 따로 두면 하나만 못 찾았을 때 어느 참조가 어느 id로 해결됐는지 알 수 없다.
 	// 이것이 레코드 → 계획 → 스냅샷으로 되짚는 사슬의 마지막 고리다.
 	SnapshotResolutions []*SnapshotResolution `protobuf:"bytes,11,rep,name=snapshot_resolutions,json=snapshotResolutions,proto3" json:"snapshot_resolutions,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// 이 조치의 소스 근거(RemediationAction.source_evidence)를 소스 근거 저장소에서 찾은 결과. 소스 근거가 있는
+	// 조치에서만 채운다 — 없는 조치의 기록은 이 필드가 생기기 전과 같은 JSON이다(옛 판이 같은 DB를 읽어도 깨지지 않게).
+	SourceEvidenceResolutions []*SourceEvidenceResolution `protobuf:"bytes,12,rep,name=source_evidence_resolutions,json=sourceEvidenceResolutions,proto3" json:"source_evidence_resolutions,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *ProvisioningRecord) Reset() {
@@ -292,6 +295,13 @@ func (x *ProvisioningRecord) GetSnapshotResolutions() []*SnapshotResolution {
 	return nil
 }
 
+func (x *ProvisioningRecord) GetSourceEvidenceResolutions() []*SourceEvidenceResolution {
+	if x != nil {
+		return x.SourceEvidenceResolutions
+	}
+	return nil
+}
+
 // SnapshotResolution — 참조 하나가 어떻게 해결됐나.
 type SnapshotResolution struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -391,6 +401,67 @@ func (*SnapshotResolution_Submitted) isSnapshotResolution_What() {}
 
 func (*SnapshotResolution_LegacyPlanSnapshotId) isSnapshotResolution_What() {}
 
+// SourceEvidenceResolution — 조치의 소스 근거 하나를 그 조직의 소스 근거 저장소에서 찾은 결과.
+type SourceEvidenceResolution struct {
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Submitted     *SourceEvidenceReference `protobuf:"bytes,1,opt,name=submitted,proto3" json:"submitted,omitempty"` // 조치의 참조 그대로
+	Resolved      bool                     `protobuf:"varint,2,opt,name=resolved,proto3" json:"resolved,omitempty"`  // 변환 결과·항목·(위치)·입력 해시가 모두 맞았다
+	Reason        string                   `protobuf:"bytes,3,opt,name=reason,proto3" json:"reason,omitempty"`       // 못 찾았거나 맞지 않을 때 사람이 읽는 이유
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceEvidenceResolution) Reset() {
+	*x = SourceEvidenceResolution{}
+	mi := &file_pqcota_provisioning_v1_rollback_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceEvidenceResolution) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceEvidenceResolution) ProtoMessage() {}
+
+func (x *SourceEvidenceResolution) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_provisioning_v1_rollback_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceEvidenceResolution.ProtoReflect.Descriptor instead.
+func (*SourceEvidenceResolution) Descriptor() ([]byte, []int) {
+	return file_pqcota_provisioning_v1_rollback_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SourceEvidenceResolution) GetSubmitted() *SourceEvidenceReference {
+	if x != nil {
+		return x.Submitted
+	}
+	return nil
+}
+
+func (x *SourceEvidenceResolution) GetResolved() bool {
+	if x != nil {
+		return x.Resolved
+	}
+	return false
+}
+
+func (x *SourceEvidenceResolution) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 var File_pqcota_provisioning_v1_rollback_proto protoreflect.FileDescriptor
 
 const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
@@ -400,7 +471,7 @@ const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
 	"\amodules\x18\x01 \x03(\tR\amodules\x12#\n" +
 	"\rconfig_digest\x18\x02 \x01(\tR\fconfigDigest\x12%\n" +
 	"\x0eprovider_chain\x18\x03 \x03(\tR\rproviderChain\x12.\n" +
-	"\x13config_snapshot_ref\x18\x04 \x01(\tR\x11configSnapshotRef\"\xe9\x03\n" +
+	"\x13config_snapshot_ref\x18\x04 \x01(\tR\x11configSnapshotRef\"\xdb\x04\n" +
 	"\x12ProvisioningRecord\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\x12\x19\n" +
@@ -413,13 +484,18 @@ const file_pqcota_provisioning_v1_rollback_proto_rawDesc = "" +
 	"\x04note\x18\t \x01(\tR\x04note\x12*\n" +
 	"\x02at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12]\n" +
-	"\x14snapshot_resolutions\x18\v \x03(\v2*.pqcota.provisioning.v1.SnapshotResolutionR\x13snapshotResolutions\"\xea\x01\n" +
+	"\x14snapshot_resolutions\x18\v \x03(\v2*.pqcota.provisioning.v1.SnapshotResolutionR\x13snapshotResolutions\x12p\n" +
+	"\x1bsource_evidence_resolutions\x18\f \x03(\v20.pqcota.provisioning.v1.SourceEvidenceResolutionR\x19sourceEvidenceResolutions\"\xea\x01\n" +
 	"\x12SnapshotResolution\x12I\n" +
 	"\tsubmitted\x18\x01 \x01(\v2).pqcota.provisioning.v1.SnapshotReferenceH\x00R\tsubmitted\x127\n" +
 	"\x17legacy_plan_snapshot_id\x18\x02 \x01(\tH\x00R\x14legacyPlanSnapshotId\x120\n" +
 	"\x14resolved_snapshot_id\x18\x03 \x01(\tR\x12resolvedSnapshotId\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reasonB\x06\n" +
-	"\x04what*\xe4\x01\n" +
+	"\x04what\"\x9d\x01\n" +
+	"\x18SourceEvidenceResolution\x12M\n" +
+	"\tsubmitted\x18\x01 \x01(\v2/.pqcota.provisioning.v1.SourceEvidenceReferenceR\tsubmitted\x12\x1a\n" +
+	"\bresolved\x18\x02 \x01(\bR\bresolved\x12\x16\n" +
+	"\x06reason\x18\x03 \x01(\tR\x06reason*\xe4\x01\n" +
 	"\x12ProvisioningStatus\x12#\n" +
 	"\x1fPROVISIONING_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aPROVISIONING_STATUS_STAGED\x10\x01\x12!\n" +
@@ -441,27 +517,31 @@ func file_pqcota_provisioning_v1_rollback_proto_rawDescGZIP() []byte {
 }
 
 var file_pqcota_provisioning_v1_rollback_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_pqcota_provisioning_v1_rollback_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_pqcota_provisioning_v1_rollback_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_pqcota_provisioning_v1_rollback_proto_goTypes = []any{
-	(ProvisioningStatus)(0),       // 0: pqcota.provisioning.v1.ProvisioningStatus
-	(*CryptoState)(nil),           // 1: pqcota.provisioning.v1.CryptoState
-	(*ProvisioningRecord)(nil),    // 2: pqcota.provisioning.v1.ProvisioningRecord
-	(*SnapshotResolution)(nil),    // 3: pqcota.provisioning.v1.SnapshotResolution
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
-	(*SnapshotReference)(nil),     // 5: pqcota.provisioning.v1.SnapshotReference
+	(ProvisioningStatus)(0),          // 0: pqcota.provisioning.v1.ProvisioningStatus
+	(*CryptoState)(nil),              // 1: pqcota.provisioning.v1.CryptoState
+	(*ProvisioningRecord)(nil),       // 2: pqcota.provisioning.v1.ProvisioningRecord
+	(*SnapshotResolution)(nil),       // 3: pqcota.provisioning.v1.SnapshotResolution
+	(*SourceEvidenceResolution)(nil), // 4: pqcota.provisioning.v1.SourceEvidenceResolution
+	(*timestamppb.Timestamp)(nil),    // 5: google.protobuf.Timestamp
+	(*SnapshotReference)(nil),        // 6: pqcota.provisioning.v1.SnapshotReference
+	(*SourceEvidenceReference)(nil),  // 7: pqcota.provisioning.v1.SourceEvidenceReference
 }
 var file_pqcota_provisioning_v1_rollback_proto_depIdxs = []int32{
 	1, // 0: pqcota.provisioning.v1.ProvisioningRecord.before:type_name -> pqcota.provisioning.v1.CryptoState
 	1, // 1: pqcota.provisioning.v1.ProvisioningRecord.after:type_name -> pqcota.provisioning.v1.CryptoState
 	0, // 2: pqcota.provisioning.v1.ProvisioningRecord.status:type_name -> pqcota.provisioning.v1.ProvisioningStatus
-	4, // 3: pqcota.provisioning.v1.ProvisioningRecord.at:type_name -> google.protobuf.Timestamp
+	5, // 3: pqcota.provisioning.v1.ProvisioningRecord.at:type_name -> google.protobuf.Timestamp
 	3, // 4: pqcota.provisioning.v1.ProvisioningRecord.snapshot_resolutions:type_name -> pqcota.provisioning.v1.SnapshotResolution
-	5, // 5: pqcota.provisioning.v1.SnapshotResolution.submitted:type_name -> pqcota.provisioning.v1.SnapshotReference
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4, // 5: pqcota.provisioning.v1.ProvisioningRecord.source_evidence_resolutions:type_name -> pqcota.provisioning.v1.SourceEvidenceResolution
+	6, // 6: pqcota.provisioning.v1.SnapshotResolution.submitted:type_name -> pqcota.provisioning.v1.SnapshotReference
+	7, // 7: pqcota.provisioning.v1.SourceEvidenceResolution.submitted:type_name -> pqcota.provisioning.v1.SourceEvidenceReference
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_provisioning_v1_rollback_proto_init() }
@@ -480,7 +560,7 @@ func file_pqcota_provisioning_v1_rollback_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_provisioning_v1_rollback_proto_rawDesc), len(file_pqcota_provisioning_v1_rollback_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
