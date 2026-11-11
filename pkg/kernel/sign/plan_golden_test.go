@@ -35,7 +35,11 @@ func goldenPlans() map[string]*provisioningv1.FinalizedPlan {
 	// 참조 꼴이 없는 근거(none).
 	none := proto.Clone(plan()).(*provisioningv1.FinalizedPlan)
 	none.Actions[0].EvidenceSources[0].Snapshot = &provisioningv1.SnapshotReference{SourceNodeId: "x"}
-	return map[string]*provisioningv1.FinalizedPlan{"current": plan(), "legacy": legacy, "two-sources": two, "no-reference": none}
+	// 단위 B의 꼴 — 가이드 필드가 생기기 전에 뽑는다. a1은 런타임 근거 + 소스 근거 둘(위치 참조·항목 전체 참조), a3은 소스 근거만.
+	onlySource := sourcePlan()
+	onlySource.Actions = onlySource.Actions[2:]
+	return map[string]*provisioningv1.FinalizedPlan{"current": plan(), "legacy": legacy, "two-sources": two, "no-reference": none,
+		"mixed-and-source-only": sourcePlan(), "source-only": onlySource}
 }
 
 // 정규형의 SHA-256(소문자 16진수).
@@ -44,7 +48,13 @@ var goldenCanonical = map[string]string{
 	"legacy":       "7d04917bb068fb494b904a04e780c48c0dc5e1ccae75555bf7900e57f9997607",
 	"two-sources":  "efcb19d85de3267878b6b5fedcb3024f9b65fbbd880c3dec435f84dfa42f6252",
 	"no-reference": "bf582af8df857487d7646921310aea18a377867871e31d9438f75febd1072edb",
+	// 단위 B(d1f16a8) 정규형. 가이드가 생겨도 가이드 없는 이 꼴은 바뀌지 않아야 한다.
+	"mixed-and-source-only": "6eb9ca8fe3658c8199cfc7dff0bd835e3066e528616395dec575a239b0f43f9d",
+	"source-only":           "2a3a825d5439b413562459d3642f6a46c1e079af53709a3299db1444413fe24a",
 }
+
+// 고정 키로 "mixed-and-source-only"에 한 승인 서명(단위 B 정규형).
+const goldenSourceApproval = "alice:ed25519:ToprTeHXk2cgYnmbzj26tFyGtaM6Wot6SRBs+F6QCl9V0WHf9g6VHf87cUXIEyHhUgacy49gce+SbBE+XrOABA=="
 
 // 고정 키(시드 0..31)로 "current"에 한 승인 서명. ed25519는 결정론적이라 같은 바이트면 같은 서명이다.
 const goldenApproval = "alice:ed25519:5qSZLO3gY3MpJlPwviuHkNb90cR+rUe7vG+DVpi/ltYpLgPHAmjbwdds+oCd8jYWIy+uq8oDklel3bM09o+HAw=="
@@ -73,6 +83,14 @@ func TestCanonicalPlanBytesAreUnchanged(t *testing.T) {
 	}
 	if sig != goldenApproval {
 		t.Errorf("approval %s, want %s", sig, goldenApproval)
+	}
+	sp := sourcePlan()
+	if sig, err := sign.SignApproval(priv, "alice", sp); err != nil || sig != goldenSourceApproval {
+		t.Errorf("source evidence approval %s, want %s (%v)", sig, goldenSourceApproval, err)
+	}
+	sp.ApprovalSignatures = []string{goldenSourceApproval}
+	if c := sign.VerifyApprovals(map[string]string{"alice": pub}, sp); len(c.Approved) != 1 {
+		t.Errorf("an approval made over unit B source evidence no longer verifies: %+v", c)
 	}
 	// 옛 코드가 만든 승인이 지금 코드에서 통과한다.
 	p.ApprovalSignatures = []string{goldenApproval}
