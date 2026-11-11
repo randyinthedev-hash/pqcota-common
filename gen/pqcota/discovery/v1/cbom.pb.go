@@ -117,10 +117,22 @@ type JcaAxes struct {
 	JdkVersion string                 `protobuf:"bytes,2,opt,name=jdk_version,json=jdkVersion,proto3" json:"jdk_version,omitempty"`
 	// provider_set: 등록 "순서 포함". 우선순위 협상(수용 원칙 §2.2 (d)) 판정의 근거.
 	// 목록상 앞선 provider가 같은 알고리즘을 먼저 서비스하면 새 provider는 무시된다.
-	ProviderSet      []string               `protobuf:"bytes,3,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"`
+	//
+	// **비어 있으면 뜻이 둘이다.** instances가 있으면 「배포본의 JVM이 체인 여럿으로 관측됐거나 일부 JVM의
+	// 체인을 보지 못했다」이고, 변형마다의 체인은 instances에 있다. instances가 없으면 「체인을 보지 못했다」다.
+	ProviderSet []string `protobuf:"bytes,3,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"`
+	// registration_mode: instances가 있으면 모든 인스턴스가 같은 모드일 때만 그 값이고, 섞이면 UNSPECIFIED다
+	// (모드별 개수는 instances[].mode_counts).
 	RegistrationMode v1.JcaRegistrationMode `protobuf:"varint,4,opt,name=registration_mode,json=registrationMode,proto3,enum=pqcota.common.v1.JcaRegistrationMode" json:"registration_mode,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// instances — 이 배포본(finding 하나)에서 관측한 JVM을 설정 변형으로 묶은 것. 아무것도 버리지 않는다.
+	// variant_key 순으로 정렬한다. 옛 수집기의 입력에는 없다(빈 목록).
+	Instances []*JcaInstance `protobuf:"bytes,5,rep,name=instances,proto3" json:"instances,omitempty"`
+	// app_key_kind — 배포본 키를 무엇으로 골랐나: systemd-unit · systemd-user-unit · jar-path · jar-name ·
+	// module · main-class · source-file · java-home · launcher-default. jar-name과 java-home은 약한 키다
+	// (서로 다른 앱이 한 배포본으로 묶일 수 있다). 비어 있으면 옛 수집기의 입력이고 옛 규칙의 id다.
+	AppKeyKind    string `protobuf:"bytes,6,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *JcaAxes) Reset() {
@@ -181,6 +193,208 @@ func (x *JcaAxes) GetRegistrationMode() v1.JcaRegistrationMode {
 	return v1.JcaRegistrationMode(0)
 }
 
+func (x *JcaAxes) GetInstances() []*JcaInstance {
+	if x != nil {
+		return x.Instances
+	}
+	return nil
+}
+
+func (x *JcaAxes) GetAppKeyKind() string {
+	if x != nil {
+		return x.AppKeyKind
+	}
+	return ""
+}
+
+// JcaInstance — 한 배포본 안의 설정 변형 하나. 고른 세 입력(java_home, 보안 속성 설정의 유무·값)과 관측한
+// 체인이 같은 JVM을 하나로 묶고 count로 센다. **이 키가 같다는 것은 그 입력과 관측한 체인이 같다는 뜻일
+// 뿐이다.** 다른 -D 설정이나 실행 중 상태는 다를 수 있다. PID는 넣지 않는다(재시작마다 바뀐다).
+type JcaInstance struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// variant_key — 세 입력과 체인을 필드 순서가 고정된 구조로 직렬화한 바이트의 전체 SHA-256(hex). 묶는 키다.
+	// 화면에는 앞 12자리만 보인다.
+	VariantKey string `protobuf:"bytes,1,opt,name=variant_key,json=variantKey,proto3" json:"variant_key,omitempty"`
+	JavaHome   string `protobuf:"bytes,2,opt,name=java_home,json=javaHome,proto3" json:"java_home,omitempty"`
+	// security_properties_set / security_properties — -Djava.security.properties가 있었나와 그 값 그대로.
+	// 값의 앞 "=" 하나(덮어쓰기 "==…"의 둘째 등호)까지 그대로 두어 덧붙이기와 덮어쓰기가 다른 변형이 된다.
+	SecurityPropertiesSet bool   `protobuf:"varint,3,opt,name=security_properties_set,json=securityPropertiesSet,proto3" json:"security_properties_set,omitempty"`
+	SecurityProperties    string `protobuf:"bytes,4,opt,name=security_properties,json=securityProperties,proto3" json:"security_properties,omitempty"`
+	// chain_observed — false면 이 변형의 JVM은 체인을 보지 못했다(attach와 정적 폴백이 모두 실패). 그때
+	// provider_set은 비고 pqc_readiness는 unknown이다. 빈 체인을 본 것과 다르다.
+	ChainObserved bool     `protobuf:"varint,5,opt,name=chain_observed,json=chainObserved,proto3" json:"chain_observed,omitempty"`
+	ProviderSet   []string `protobuf:"bytes,6,rep,name=provider_set,json=providerSet,proto3" json:"provider_set,omitempty"` // 관측한 체인, 등록 순서 그대로
+	// registration_mode — 이 변형의 JVM이 모두 같은 모드일 때만 그 값이다. 섞이면 UNSPECIFIED이고 mode_counts가 사실이다.
+	RegistrationMode v1.JcaRegistrationMode `protobuf:"varint,7,opt,name=registration_mode,json=registrationMode,proto3,enum=pqcota.common.v1.JcaRegistrationMode" json:"registration_mode,omitempty"`
+	PqcReadiness     string                 `protobuf:"bytes,8,opt,name=pqc_readiness,json=pqcReadiness,proto3" json:"pqc_readiness,omitempty"` // 정규화가 이 변형의 체인으로 계산한다(finding의 pqc_readiness와 같은 말)
+	FipsValidation   string                 `protobuf:"bytes,9,opt,name=fips_validation,json=fipsValidation,proto3" json:"fips_validation,omitempty"`
+	Count            uint32                 `protobuf:"varint,10,opt,name=count,proto3" json:"count,omitempty"` // 이 변형으로 본 JVM 수(= mode_counts의 합)
+	// mode_counts — 모드별 JVM 수. 모드 열거값 순으로 정렬하고 0인 모드는 싣지 않는다. 정적 폴백과 런타임
+	// 관측이 같은 체인을 보고하면 같은 변형이 되므로, 어느 쪽인지는 여기에만 남는다.
+	ModeCounts    []*JcaModeCount `protobuf:"bytes,11,rep,name=mode_counts,json=modeCounts,proto3" json:"mode_counts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JcaInstance) Reset() {
+	*x = JcaInstance{}
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JcaInstance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JcaInstance) ProtoMessage() {}
+
+func (x *JcaInstance) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JcaInstance.ProtoReflect.Descriptor instead.
+func (*JcaInstance) Descriptor() ([]byte, []int) {
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *JcaInstance) GetVariantKey() string {
+	if x != nil {
+		return x.VariantKey
+	}
+	return ""
+}
+
+func (x *JcaInstance) GetJavaHome() string {
+	if x != nil {
+		return x.JavaHome
+	}
+	return ""
+}
+
+func (x *JcaInstance) GetSecurityPropertiesSet() bool {
+	if x != nil {
+		return x.SecurityPropertiesSet
+	}
+	return false
+}
+
+func (x *JcaInstance) GetSecurityProperties() string {
+	if x != nil {
+		return x.SecurityProperties
+	}
+	return ""
+}
+
+func (x *JcaInstance) GetChainObserved() bool {
+	if x != nil {
+		return x.ChainObserved
+	}
+	return false
+}
+
+func (x *JcaInstance) GetProviderSet() []string {
+	if x != nil {
+		return x.ProviderSet
+	}
+	return nil
+}
+
+func (x *JcaInstance) GetRegistrationMode() v1.JcaRegistrationMode {
+	if x != nil {
+		return x.RegistrationMode
+	}
+	return v1.JcaRegistrationMode(0)
+}
+
+func (x *JcaInstance) GetPqcReadiness() string {
+	if x != nil {
+		return x.PqcReadiness
+	}
+	return ""
+}
+
+func (x *JcaInstance) GetFipsValidation() string {
+	if x != nil {
+		return x.FipsValidation
+	}
+	return ""
+}
+
+func (x *JcaInstance) GetCount() uint32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *JcaInstance) GetModeCounts() []*JcaModeCount {
+	if x != nil {
+		return x.ModeCounts
+	}
+	return nil
+}
+
+type JcaModeCount struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Mode          v1.JcaRegistrationMode `protobuf:"varint,1,opt,name=mode,proto3,enum=pqcota.common.v1.JcaRegistrationMode" json:"mode,omitempty"`
+	Count         uint32                 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JcaModeCount) Reset() {
+	*x = JcaModeCount{}
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JcaModeCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JcaModeCount) ProtoMessage() {}
+
+func (x *JcaModeCount) ProtoReflect() protoreflect.Message {
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JcaModeCount.ProtoReflect.Descriptor instead.
+func (*JcaModeCount) Descriptor() ([]byte, []int) {
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *JcaModeCount) GetMode() v1.JcaRegistrationMode {
+	if x != nil {
+		return x.Mode
+	}
+	return v1.JcaRegistrationMode(0)
+}
+
+func (x *JcaModeCount) GetCount() uint32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
 // CngAxes — Windows CNG 분기축. v0.1.0에서 스키마로만 예약했고 **v0.6.0에서 채워졌다**:
 // pqcota-cngscan이 관측하고 정규화(pkg/inventory/normalize)가 이 축을 파생한다. 필드는 provider
 // 동형성(수용 원칙 §2.1)이 보장하는 것만 최소로 두고, 실물 관측이 정한 나머지(algorithms)는 그때
@@ -203,7 +417,7 @@ type CngAxes struct {
 
 func (x *CngAxes) Reset() {
 	*x = CngAxes{}
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[2]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -215,7 +429,7 @@ func (x *CngAxes) String() string {
 func (*CngAxes) ProtoMessage() {}
 
 func (x *CngAxes) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[2]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +442,7 @@ func (x *CngAxes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CngAxes.ProtoReflect.Descriptor instead.
 func (*CngAxes) Descriptor() ([]byte, []int) {
-	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{2}
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CngAxes) GetProviderSet() []string {
@@ -264,7 +478,7 @@ type CngAlgorithm struct {
 
 func (x *CngAlgorithm) Reset() {
 	*x = CngAlgorithm{}
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +490,7 @@ func (x *CngAlgorithm) String() string {
 func (*CngAlgorithm) ProtoMessage() {}
 
 func (x *CngAlgorithm) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[3]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +503,7 @@ func (x *CngAlgorithm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CngAlgorithm.ProtoReflect.Descriptor instead.
 func (*CngAlgorithm) Descriptor() ([]byte, []int) {
-	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{3}
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CngAlgorithm) GetName() string {
@@ -348,7 +562,7 @@ type Finding struct {
 
 func (x *Finding) Reset() {
 	*x = Finding{}
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -360,7 +574,7 @@ func (x *Finding) String() string {
 func (*Finding) ProtoMessage() {}
 
 func (x *Finding) ProtoReflect() protoreflect.Message {
-	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[4]
+	mi := &file_pqcota_discovery_v1_cbom_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -373,7 +587,7 @@ func (x *Finding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Finding.ProtoReflect.Descriptor instead.
 func (*Finding) Descriptor() ([]byte, []int) {
-	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{4}
+	return file_pqcota_discovery_v1_cbom_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Finding) GetId() string {
@@ -528,14 +742,35 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x12\n" +
 	"\x04fork\x18\x03 \x01(\tR\x04fork\x12G\n" +
 	"\fbinding_mode\x18\x04 \x01(\x0e2$.pqcota.common.v1.OpensslBindingModeR\vbindingMode\x12\x12\n" +
-	"\x04path\x18\x05 \x01(\tR\x04path\"\xc0\x01\n" +
+	"\x04path\x18\x05 \x01(\tR\x04path\"\xa2\x02\n" +
 	"\aJcaAxes\x12\x1d\n" +
 	"\n" +
 	"jdk_vendor\x18\x01 \x01(\tR\tjdkVendor\x12\x1f\n" +
 	"\vjdk_version\x18\x02 \x01(\tR\n" +
 	"jdkVersion\x12!\n" +
 	"\fprovider_set\x18\x03 \x03(\tR\vproviderSet\x12R\n" +
-	"\x11registration_mode\x18\x04 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\"o\n" +
+	"\x11registration_mode\x18\x04 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\x12>\n" +
+	"\tinstances\x18\x05 \x03(\v2 .pqcota.discovery.v1.JcaInstanceR\tinstances\x12 \n" +
+	"\fapp_key_kind\x18\x06 \x01(\tR\n" +
+	"appKeyKind\"\xfa\x03\n" +
+	"\vJcaInstance\x12\x1f\n" +
+	"\vvariant_key\x18\x01 \x01(\tR\n" +
+	"variantKey\x12\x1b\n" +
+	"\tjava_home\x18\x02 \x01(\tR\bjavaHome\x126\n" +
+	"\x17security_properties_set\x18\x03 \x01(\bR\x15securityPropertiesSet\x12/\n" +
+	"\x13security_properties\x18\x04 \x01(\tR\x12securityProperties\x12%\n" +
+	"\x0echain_observed\x18\x05 \x01(\bR\rchainObserved\x12!\n" +
+	"\fprovider_set\x18\x06 \x03(\tR\vproviderSet\x12R\n" +
+	"\x11registration_mode\x18\a \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\x12#\n" +
+	"\rpqc_readiness\x18\b \x01(\tR\fpqcReadiness\x12'\n" +
+	"\x0ffips_validation\x18\t \x01(\tR\x0efipsValidation\x12\x14\n" +
+	"\x05count\x18\n" +
+	" \x01(\rR\x05count\x12B\n" +
+	"\vmode_counts\x18\v \x03(\v2!.pqcota.discovery.v1.JcaModeCountR\n" +
+	"modeCounts\"_\n" +
+	"\fJcaModeCount\x129\n" +
+	"\x04mode\x18\x01 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x04mode\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\rR\x05count\"o\n" +
 	"\aCngAxes\x12!\n" +
 	"\fprovider_set\x18\x01 \x03(\tR\vproviderSet\x12A\n" +
 	"\n" +
@@ -576,36 +811,42 @@ func file_pqcota_discovery_v1_cbom_proto_rawDescGZIP() []byte {
 	return file_pqcota_discovery_v1_cbom_proto_rawDescData
 }
 
-var file_pqcota_discovery_v1_cbom_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_pqcota_discovery_v1_cbom_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_pqcota_discovery_v1_cbom_proto_goTypes = []any{
 	(*OpensslAxes)(nil),         // 0: pqcota.discovery.v1.OpensslAxes
 	(*JcaAxes)(nil),             // 1: pqcota.discovery.v1.JcaAxes
-	(*CngAxes)(nil),             // 2: pqcota.discovery.v1.CngAxes
-	(*CngAlgorithm)(nil),        // 3: pqcota.discovery.v1.CngAlgorithm
-	(*Finding)(nil),             // 4: pqcota.discovery.v1.Finding
-	(v1.OpensslBindingMode)(0),  // 5: pqcota.common.v1.OpensslBindingMode
-	(v1.JcaRegistrationMode)(0), // 6: pqcota.common.v1.JcaRegistrationMode
-	(v1.CryptoRuntime)(0),       // 7: pqcota.common.v1.CryptoRuntime
-	(v1.UsageContext)(0),        // 8: pqcota.common.v1.UsageContext
-	(v1.DetectionMethod)(0),     // 9: pqcota.common.v1.DetectionMethod
-	(v1.EvidenceStrength)(0),    // 10: pqcota.common.v1.EvidenceStrength
+	(*JcaInstance)(nil),         // 2: pqcota.discovery.v1.JcaInstance
+	(*JcaModeCount)(nil),        // 3: pqcota.discovery.v1.JcaModeCount
+	(*CngAxes)(nil),             // 4: pqcota.discovery.v1.CngAxes
+	(*CngAlgorithm)(nil),        // 5: pqcota.discovery.v1.CngAlgorithm
+	(*Finding)(nil),             // 6: pqcota.discovery.v1.Finding
+	(v1.OpensslBindingMode)(0),  // 7: pqcota.common.v1.OpensslBindingMode
+	(v1.JcaRegistrationMode)(0), // 8: pqcota.common.v1.JcaRegistrationMode
+	(v1.CryptoRuntime)(0),       // 9: pqcota.common.v1.CryptoRuntime
+	(v1.UsageContext)(0),        // 10: pqcota.common.v1.UsageContext
+	(v1.DetectionMethod)(0),     // 11: pqcota.common.v1.DetectionMethod
+	(v1.EvidenceStrength)(0),    // 12: pqcota.common.v1.EvidenceStrength
 }
 var file_pqcota_discovery_v1_cbom_proto_depIdxs = []int32{
-	5,  // 0: pqcota.discovery.v1.OpensslAxes.binding_mode:type_name -> pqcota.common.v1.OpensslBindingMode
-	6,  // 1: pqcota.discovery.v1.JcaAxes.registration_mode:type_name -> pqcota.common.v1.JcaRegistrationMode
-	3,  // 2: pqcota.discovery.v1.CngAxes.algorithms:type_name -> pqcota.discovery.v1.CngAlgorithm
-	7,  // 3: pqcota.discovery.v1.Finding.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
-	8,  // 4: pqcota.discovery.v1.Finding.usage_context:type_name -> pqcota.common.v1.UsageContext
-	9,  // 5: pqcota.discovery.v1.Finding.detection_method:type_name -> pqcota.common.v1.DetectionMethod
-	10, // 6: pqcota.discovery.v1.Finding.evidence_strength:type_name -> pqcota.common.v1.EvidenceStrength
-	0,  // 7: pqcota.discovery.v1.Finding.openssl:type_name -> pqcota.discovery.v1.OpensslAxes
-	1,  // 8: pqcota.discovery.v1.Finding.jca:type_name -> pqcota.discovery.v1.JcaAxes
-	2,  // 9: pqcota.discovery.v1.Finding.cng:type_name -> pqcota.discovery.v1.CngAxes
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	7,  // 0: pqcota.discovery.v1.OpensslAxes.binding_mode:type_name -> pqcota.common.v1.OpensslBindingMode
+	8,  // 1: pqcota.discovery.v1.JcaAxes.registration_mode:type_name -> pqcota.common.v1.JcaRegistrationMode
+	2,  // 2: pqcota.discovery.v1.JcaAxes.instances:type_name -> pqcota.discovery.v1.JcaInstance
+	8,  // 3: pqcota.discovery.v1.JcaInstance.registration_mode:type_name -> pqcota.common.v1.JcaRegistrationMode
+	3,  // 4: pqcota.discovery.v1.JcaInstance.mode_counts:type_name -> pqcota.discovery.v1.JcaModeCount
+	8,  // 5: pqcota.discovery.v1.JcaModeCount.mode:type_name -> pqcota.common.v1.JcaRegistrationMode
+	5,  // 6: pqcota.discovery.v1.CngAxes.algorithms:type_name -> pqcota.discovery.v1.CngAlgorithm
+	9,  // 7: pqcota.discovery.v1.Finding.crypto_runtime:type_name -> pqcota.common.v1.CryptoRuntime
+	10, // 8: pqcota.discovery.v1.Finding.usage_context:type_name -> pqcota.common.v1.UsageContext
+	11, // 9: pqcota.discovery.v1.Finding.detection_method:type_name -> pqcota.common.v1.DetectionMethod
+	12, // 10: pqcota.discovery.v1.Finding.evidence_strength:type_name -> pqcota.common.v1.EvidenceStrength
+	0,  // 11: pqcota.discovery.v1.Finding.openssl:type_name -> pqcota.discovery.v1.OpensslAxes
+	1,  // 12: pqcota.discovery.v1.Finding.jca:type_name -> pqcota.discovery.v1.JcaAxes
+	4,  // 13: pqcota.discovery.v1.Finding.cng:type_name -> pqcota.discovery.v1.CngAxes
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_pqcota_discovery_v1_cbom_proto_init() }
@@ -613,7 +854,7 @@ func file_pqcota_discovery_v1_cbom_proto_init() {
 	if File_pqcota_discovery_v1_cbom_proto != nil {
 		return
 	}
-	file_pqcota_discovery_v1_cbom_proto_msgTypes[4].OneofWrappers = []any{
+	file_pqcota_discovery_v1_cbom_proto_msgTypes[6].OneofWrappers = []any{
 		(*Finding_Openssl)(nil),
 		(*Finding_Jca)(nil),
 		(*Finding_Cng)(nil),
@@ -624,7 +865,7 @@ func file_pqcota_discovery_v1_cbom_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pqcota_discovery_v1_cbom_proto_rawDesc), len(file_pqcota_discovery_v1_cbom_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
