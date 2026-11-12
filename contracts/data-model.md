@@ -90,7 +90,15 @@ The typed view the core normalization pipeline derives from the `cbom_cyclonedx`
 | `NetworkProtocol` | the observed protocol | `TLS`·`SSH`·`QUIC` (its handshake is encrypted → usually unknown) |
 | `EdgeRole` | the direction of src | `CLIENT`·`SERVER` |
 | `QuantumPosture` | quantum posture. A **derived view** — the core classifies it from `negotiated_group` | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
-| **`ObservedEdge`** | one observed communication edge | `src_node_id`·`dst_node_id` (empty plus `dst_addr` if unresolved)·`protocol`·`role`·**`negotiated_group`** (the posture input)·`cipher`·`observed_count`·`first/last_seen` |
+| **`ObservedEdge`** | one observed communication edge | `src_node_id`·`dst_node_id` (empty plus `dst_addr` if unresolved)·`protocol`·`role`·**`negotiated_group`** (the posture input)·`cipher`·`observed_count`·`first/last_seen`·`app_key`·`app_key_kind` |
+
+> **`observed_count` is the number of connections the capture saw** in its window for that edge (from v0.13.0; up to
+> v0.12.0 it counted handshake messages, several per connection). **`app_key` names the application that opened those
+> connections.** Each connection is matched to its own socket by both endpoints, so two applications talking to the same
+> destination are two edges. The source port is used only for that lookup and is not part of the edge. When the socket
+> was already closed by the time it was looked up, the application cannot be identified: the connection is still
+> counted, on an edge with an empty `app_key`, and the completeness note says why. An empty `app_key` means "not
+> identified", not "no application".
 
 ---
 

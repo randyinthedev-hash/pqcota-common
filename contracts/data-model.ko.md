@@ -90,7 +90,14 @@
 | `NetworkProtocol` | 관측한 프로토콜 | `TLS`·`SSH`·`QUIC`(핸드셰이크가 암호화되어 있어 대개 알 수 없음) |
 | `EdgeRole` | src의 방향 | `CLIENT`·`SERVER` |
 | `QuantumPosture` | 양자내성 상태. **파생 뷰**이며 코어가 `negotiated_group`에서 분류합니다 | 🟢`PQC_HYBRID`·🔴`CLASSICAL`·⚪`UNSPECIFIED` |
-| **`ObservedEdge`** | 관측한 통신 연결 간선 하나 | `src_node_id`·`dst_node_id`(풀어내지 못하면 비우고 `dst_addr`을 채웁니다)·`protocol`·`role`·**`negotiated_group`**(상태의 입력)·`cipher`·`observed_count`·`first/last_seen` |
+| **`ObservedEdge`** | 관측한 통신 연결 간선 하나 | `src_node_id`·`dst_node_id`(풀어내지 못하면 비우고 `dst_addr`을 채웁니다)·`protocol`·`role`·**`negotiated_group`**(상태의 입력)·`cipher`·`observed_count`·`first/last_seen`·`app_key`·`app_key_kind` |
+
+> **`observed_count`는 캡처가 관측 구간에 그 간선에서 본 연결의 수입니다**(v0.13.0부터. v0.12.0까지는 핸드셰이크
+> 메시지를 셌고, 연결 하나에 여럿이 나왔습니다). **`app_key`는 그 연결을 연 애플리케이션입니다.** 연결마다 두 끝점으로
+> 자기 소켓을 찾으므로, 같은 목적지에 붙은 애플리케이션이 둘이면 간선도 둘입니다. 출발 포트는 소켓을 찾는 데만 쓰고
+> 간선에는 넣지 않습니다. 소켓을 찾을 때 이미 닫혀 있었으면 애플리케이션을 알아낼 수 없습니다. 그래도 그 연결은
+> `app_key`가 빈 간선에 세어 남고, 왜 못 알아냈는지는 완전성 노트에 적힙니다. 빈 `app_key`는 「애플리케이션이 없다」가
+> 아니라 「알아내지 못했다」입니다.
 
 ---
 
