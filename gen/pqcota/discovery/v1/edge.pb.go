@@ -203,18 +203,20 @@ type ObservedEdge struct {
 	NegotiatedGroup string                 `protobuf:"bytes,7,opt,name=negotiated_group,json=negotiatedGroup,proto3" json:"negotiated_group,omitempty"`                                        // 협상된 KEX 그룹. 등급 분류 입력. 예: "X25519MLKEM768".
 	Cipher          string                 `protobuf:"bytes,8,opt,name=cipher,proto3" json:"cipher,omitempty"`                                                                                 // 협상된 cipher suite (부가 근거).
 	DetectionMethod v1.DetectionMethod     `protobuf:"varint,9,opt,name=detection_method,json=detectionMethod,proto3,enum=pqcota.common.v1.DetectionMethod" json:"detection_method,omitempty"` // 대개 RUNTIME_INTROSPECTION(수동 관측) — evidence_strength 파생 근거.
-	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — confidence 입력(§3.5).
+	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — 관측 구간에 본 연결의 수(핸드셰이크 메시지 수가 아니다. v0.12.0까지는 메시지 수였다). confidence 입력(§3.5).
 	FirstSeen       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=first_seen,json=firstSeen,proto3" json:"first_seen,omitempty"`
 	LastSeen        *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
 	// 이 엣지를 연 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
-	// 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 값의 모양은 asset.proto와 같다
-	// — systemd 유닛명 우선, 없으면 exe 경로.
+	// 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 소켓은 연결의 두 끝점(로컬·원격 주소와 포트)으로
+	// 찾는다 — 같은 목적지에 붙은 앱이 여럿이면 엣지도 앱마다 따로다. 출발 포트는 소켓을 찾는 데만 쓰고 엣지에
+	// 싣지 않는다. 값의 모양은 asset.proto와 같다 — systemd 서비스 우선(경로의 마지막 `.service`, 사용자
+	// 관리자 아래면 `user@<uid>.service/<유닛>`, `.scope`는 쓰지 않는다), 없으면 exe 경로.
 	//
 	// **비었다는 것은 "앱이 없다"가 아니라 "어느 앱인지 밝히지 못했다"이다.** 앱을 늘 짚어내지는 못한다 — best-effort다:
 	// 짧게 붙었다 끊긴 연결은 /proc을 읽는 시점에 이미 없고, 권한이 모자라면 남의 프로세스
 	// fd를 읽지 못한다. 어느 쪽이었는지는 완전성 맵의 note에 적힌다 — 관측 갭과 같은 규칙이다.
 	AppKey string `protobuf:"bytes,13,opt,name=app_key,json=appKey,proto3" json:"app_key,omitempty"`
-	// app_key를 무엇에서 뽑았나 — "systemd-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
+	// app_key를 무엇에서 뽑았나 — "systemd-unit" | "systemd-user-unit" | "exe-path". 빈 app_key면 함께 비어 있다.
 	// 근거가 다르면 신뢰도가 다르므로 값만 두고 출처를 버리지 않는다.
 	AppKeyKind    string `protobuf:"bytes,14,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
