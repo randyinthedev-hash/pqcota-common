@@ -128,8 +128,9 @@ type JcaAxes struct {
 	// variant_key 순으로 정렬한다. 옛 수집기의 입력에는 없다(빈 목록).
 	Instances []*JcaInstance `protobuf:"bytes,5,rep,name=instances,proto3" json:"instances,omitempty"`
 	// app_key_kind — 배포본 키를 무엇으로 골랐나: systemd-unit · systemd-user-unit · jar-path · jar-name ·
-	// module · main-class · source-file · java-home · launcher-default. jar-name과 java-home은 약한 키다
-	// (서로 다른 앱이 한 배포본으로 묶일 수 있다). 비어 있으면 옛 수집기의 입력이고 옛 규칙의 id다.
+	// module · main-class · source-file · java-home · exe-path · launcher-default. jar-name·java-home·exe-path는
+	// 약한 키다(서로 다른 앱이 한 배포본으로 묶일 수 있다). 비어 있으면 옛 수집기의 입력이고 옛 규칙의 id다.
+	// 키 값은 컴포넌트 이름(`jca-provider-chain@<키>`)에 **줄이지 않고** 싣는다 — 코어가 그 이름으로 id를 만든다.
 	AppKeyKind    string `protobuf:"bytes,6,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
