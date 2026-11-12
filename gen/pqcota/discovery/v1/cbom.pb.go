@@ -131,9 +131,13 @@ type JcaAxes struct {
 	// module · main-class · source-file · java-home · exe-path · launcher-default. jar-name·java-home·exe-path는
 	// 약한 키다(서로 다른 앱이 한 배포본으로 묶일 수 있다). 비어 있으면 옛 수집기의 입력이고 옛 규칙의 id다.
 	// 키 값은 컴포넌트 이름(`jca-provider-chain@<키>`)에 **줄이지 않고** 싣는다 — 코어가 그 이름으로 id를 만든다.
-	AppKeyKind    string `protobuf:"bytes,6,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	AppKeyKind string `protobuf:"bytes,6,opt,name=app_key_kind,json=appKeyKind,proto3" json:"app_key_kind,omitempty"`
+	// observation_scope — 이 결과가 배포본의 어디까지를 관측 대상으로 삼았나. 비면 노드에서 찾은 JVM 전부다.
+	// "selected-pid"면 수집기가 지정한 JVM만 관측했다(pqcota-jvmscan --pid). 같은 배포본의 다른 JVM은
+	// instances에 체인 없는 변형으로 남고, 이 결과만으로 배포본 전체의 before를 기록하지 않는다.
+	ObservationScope string `protobuf:"bytes,7,opt,name=observation_scope,json=observationScope,proto3" json:"observation_scope,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *JcaAxes) Reset() {
@@ -204,6 +208,13 @@ func (x *JcaAxes) GetInstances() []*JcaInstance {
 func (x *JcaAxes) GetAppKeyKind() string {
 	if x != nil {
 		return x.AppKeyKind
+	}
+	return ""
+}
+
+func (x *JcaAxes) GetObservationScope() string {
+	if x != nil {
+		return x.ObservationScope
 	}
 	return ""
 }
@@ -743,7 +754,7 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x12\n" +
 	"\x04fork\x18\x03 \x01(\tR\x04fork\x12G\n" +
 	"\fbinding_mode\x18\x04 \x01(\x0e2$.pqcota.common.v1.OpensslBindingModeR\vbindingMode\x12\x12\n" +
-	"\x04path\x18\x05 \x01(\tR\x04path\"\xa2\x02\n" +
+	"\x04path\x18\x05 \x01(\tR\x04path\"\xcf\x02\n" +
 	"\aJcaAxes\x12\x1d\n" +
 	"\n" +
 	"jdk_vendor\x18\x01 \x01(\tR\tjdkVendor\x12\x1f\n" +
@@ -753,7 +764,8 @@ const file_pqcota_discovery_v1_cbom_proto_rawDesc = "" +
 	"\x11registration_mode\x18\x04 \x01(\x0e2%.pqcota.common.v1.JcaRegistrationModeR\x10registrationMode\x12>\n" +
 	"\tinstances\x18\x05 \x03(\v2 .pqcota.discovery.v1.JcaInstanceR\tinstances\x12 \n" +
 	"\fapp_key_kind\x18\x06 \x01(\tR\n" +
-	"appKeyKind\"\xfa\x03\n" +
+	"appKeyKind\x12+\n" +
+	"\x11observation_scope\x18\a \x01(\tR\x10observationScope\"\xfa\x03\n" +
 	"\vJcaInstance\x12\x1f\n" +
 	"\vvariant_key\x18\x01 \x01(\tR\n" +
 	"variantKey\x12\x1b\n" +

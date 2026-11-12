@@ -51,6 +51,10 @@ message JcaAxes {
   // 약한 키다(서로 다른 앱이 한 배포본으로 묶일 수 있다). 비어 있으면 옛 수집기의 입력이고 옛 규칙의 id다.
   // 키 값은 컴포넌트 이름(`jca-provider-chain@<키>`)에 **줄이지 않고** 싣는다 — 코어가 그 이름으로 id를 만든다.
   string app_key_kind = 6;
+  // observation_scope — 이 결과가 배포본의 어디까지를 관측 대상으로 삼았나. 비면 노드에서 찾은 JVM 전부다.
+  // "selected-pid"면 수집기가 지정한 JVM만 관측했다(pqcota-jvmscan --pid). 같은 배포본의 다른 JVM은
+  // instances에 체인 없는 변형으로 남고, 이 결과만으로 배포본 전체의 before를 기록하지 않는다.
+  string observation_scope = 7;
 }
 
 // JcaInstance — 한 배포본 안의 설정 변형 하나. 고른 세 입력(java_home, 보안 속성 설정의 유무·값)과 관측한
