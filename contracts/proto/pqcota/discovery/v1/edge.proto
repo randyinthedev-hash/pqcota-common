@@ -57,7 +57,7 @@ message ObservedEdge {
   string cipher = 8;           // 협상된 cipher suite (부가 근거).
 
   pqcota.common.v1.DetectionMethod detection_method = 9; // 대개 RUNTIME_INTROSPECTION(수동 관측) — evidence_strength 파생 근거.
-  uint64 observed_count = 10;           // 관측 횟수(빈도) — 관측 구간에 본 연결의 수(핸드셰이크 메시지 수가 아니다. v0.12.0까지는 메시지 수였다). confidence 입력(§3.5).
+  uint64 observed_count = 10;           // 관측 횟수(빈도) — 관측 구간에 핸드셰이크를 관측한 고유 연결 튜플(양쪽 주소·포트, 프로토콜)의 수. 구간 안에서 재사용된 튜플은 한 번만 센다. v0.12.0까지는 핸드셰이크 메시지 수였다. confidence 입력(§3.5).
   google.protobuf.Timestamp first_seen = 11;
   google.protobuf.Timestamp last_seen = 12;
 

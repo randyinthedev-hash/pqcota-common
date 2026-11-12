@@ -203,7 +203,7 @@ type ObservedEdge struct {
 	NegotiatedGroup string                 `protobuf:"bytes,7,opt,name=negotiated_group,json=negotiatedGroup,proto3" json:"negotiated_group,omitempty"`                                        // 협상된 KEX 그룹. 등급 분류 입력. 예: "X25519MLKEM768".
 	Cipher          string                 `protobuf:"bytes,8,opt,name=cipher,proto3" json:"cipher,omitempty"`                                                                                 // 협상된 cipher suite (부가 근거).
 	DetectionMethod v1.DetectionMethod     `protobuf:"varint,9,opt,name=detection_method,json=detectionMethod,proto3,enum=pqcota.common.v1.DetectionMethod" json:"detection_method,omitempty"` // 대개 RUNTIME_INTROSPECTION(수동 관측) — evidence_strength 파생 근거.
-	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — 관측 구간에 본 연결의 수(핸드셰이크 메시지 수가 아니다. v0.12.0까지는 메시지 수였다). confidence 입력(§3.5).
+	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — 관측 구간에 핸드셰이크를 관측한 고유 연결 튜플(양쪽 주소·포트, 프로토콜)의 수. 구간 안에서 재사용된 튜플은 한 번만 센다. v0.12.0까지는 핸드셰이크 메시지 수였다. confidence 입력(§3.5).
 	FirstSeen       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=first_seen,json=firstSeen,proto3" json:"first_seen,omitempty"`
 	LastSeen        *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
 	// 이 엣지를 연 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
