@@ -7,15 +7,15 @@
 ### `pqcota-keygen`
 
 ```
-pqcota-keygen
+pqcota-keygen [-collector <id>]
 ```
 
-인자는 없습니다. **ed25519 키 쌍**을 만들어 표준 출력으로 내보냅니다. 같은 종류의 키 쌍이 서로 다른 두 가지에 서명하므로, 출력은 줄마다 그 값이 갈 자리를 이름으로 밝힙니다.
+**ed25519 키 쌍**을 만들어 표준 출력으로 내보냅니다. 같은 종류의 키 쌍이 서로 다른 두 가지에 서명하므로, 출력은 줄마다 그 값이 갈 자리를 이름으로 밝힙니다.
 
 | 출력되는 것 | 놓는 곳 | 쓰는 쪽 |
 |---|---|---|
 | `PQCOTA_SIGN_KEY`(개인 키) | 수집기가 실행되는 노드 | 수집기 결과에 서명합니다. [pqcota-discovery cmd · 권한 · 환경변수](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md#privileges--environment-variables)(영문) |
-| `PQCOTA_VERIFY_KEY`(공개 키) | `pqcota-ingest`가 실행되는 중앙 | 수집기 서명을 검증합니다. 키가 여럿이면 쉼표로 구분합니다 |
+| `PQCOTA_VERIFY_KEY`(공개 키) | `pqcota-ingest`가 실행되는 중앙 | 수집기 서명을 검증합니다. `<collector-id>:<공개 키>`로 적으면 그 수집기의 결과에서만 통과합니다. `-collector <id>`를 주면 이 형식으로 출력합니다. 여럿이면 쉼표로 구분합니다. [키를 수집기 ID에 묶기](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/environment-variables.ko.md#키를-수집기-id에-묶기) |
 
 **계획 승인**에는 같은 두 값을 승인 명령이 읽는 이름으로 씁니다. 개인 키는 [`pqcota-approve`](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/cmd/README.md#pqcota-approve)(영문)가 읽는 `PQCOTA_APPROVAL_KEY`로, `<approver>=<public key>`는 [`pqcota-provision`](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/cmd/README.md#pqcota-provision)(영문)이 읽는 `PQCOTA_APPROVAL_KEYS`로 씁니다. 역할마다 키 쌍을 따로 쓰세요. 수집기 결과에 서명하는 키가 계획도 승인해서는 안 됩니다.
 

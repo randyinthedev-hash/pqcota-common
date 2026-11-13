@@ -254,7 +254,7 @@ func verifySig(pubB64 string, msg []byte, sig string) bool {
 // ParseKeyMap — `"<id>=<base64 공개키>"`를 콤마로 이은 환경변수 값을 묶음으로 읽는다.
 //
 // **이 꼴을 쓰는 이유**가 곧 PQCOTA_VERIFY_KEY의 교훈이다. 그쪽은 키만 나열해서 어느 키가
-// 누구 것인지 말하지 않고, 그래서 collector에 묶을 수 없어 [VerifyFrom]의 배선이 아직 보류다.
+// 누구 것인지 말하지 않아 collector에 묶을 수 없었다(v0.15.0에서 `<collector-id>:<key>` 꼴을 더했다, [ParseCollectorKeys]).
 // 승인 쪽은 처음부터 id를 함께 받는다.
 func ParseKeyMap(s string) (map[string]string, error) {
 	s = strings.TrimSpace(s)

@@ -7,15 +7,15 @@ The one command here is used by more than one stage, so it lives in the shared m
 ### `pqcota-keygen`
 
 ```
-pqcota-keygen
+pqcota-keygen [-collector <id>]
 ```
 
-No arguments. It generates an **ed25519 key pair** and prints it to stdout. The same kind of key pair signs two different things, so the output names each line for the place it goes:
+It generates an **ed25519 key pair** and prints it to stdout. The same kind of key pair signs two different things, so the output names each line for the place it goes:
 
 | What it prints | Where it goes | Who uses it |
 |---|---|---|
 | `PQCOTA_SIGN_KEY` (private) | on the node, when a collector runs | signs the collector result — [pqcota-discovery cmd · Privileges and environment variables](https://github.com/randyinthedev-hash/pqcota-discovery/blob/main/cmd/README.md#privileges--environment-variables) |
-| `PQCOTA_VERIFY_KEY` (public) | at the centre, when `pqcota-ingest` runs | verifies the collector signature. Several keys are comma-separated |
+| `PQCOTA_VERIFY_KEY` (public) | at the centre, when `pqcota-ingest` runs | verifies the collector signature. Write it as `<collector-id>:<public key>` so the key passes only for that collector; `-collector <id>` prints it that way. Several entries are comma-separated. [Binding keys to collector IDs](https://github.com/randyinthedev-hash/pqcota/blob/main/docs/environment-variables.md#binding-keys-to-collector-ids) |
 
 For a **plan approval** use the same two values under the names the approval commands read: the private key as `PQCOTA_APPROVAL_KEY` for [`pqcota-approve`](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/cmd/README.md#pqcota-approve), and `<approver>=<public key>` in `PQCOTA_APPROVAL_KEYS` for [`pqcota-provision`](https://github.com/randyinthedev-hash/pqcota-provisioning/blob/main/cmd/README.md#pqcota-provision). Use a separate pair per role: a key that signs collector results should not also approve plans.
 
