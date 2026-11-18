@@ -30,9 +30,9 @@ enum NetworkProtocol {
 
 // 관측 시점에서 본 src 노드의 역할(방향). 대조·토폴로지 방향성의 근거.
 enum EdgeRole {
-  EDGE_ROLE_UNSPECIFIED = 0;
-  EDGE_ROLE_CLIENT = 1; // src가 연결 개시자
-  EDGE_ROLE_SERVER = 2; // src가 수신자
+  EDGE_ROLE_UNSPECIFIED = 0; // 역할을 확인하지 못함(추정하지 않는다). 예: SSH에서 로컬 포트의 LISTEN을 읽지 못했다
+  EDGE_ROLE_CLIENT = 1;      // src(관측 노드)가 연결 개시자
+  EDGE_ROLE_SERVER = 2;      // src(관측 노드)가 수신자. v0.18.0부터 netcap이 받은 연결도 낸다
 }
 
 // 양자내성 등급 (인벤토리 설계 §6.1). ★ 파생 뷰 — 코어가 negotiated_group에서 분류한다.
@@ -48,8 +48,12 @@ enum QuantumPosture {
 message ObservedEdge {
   string src_node_id = 1;   // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
   string dst_node_id = 2;   // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
-  string dst_addr = 3;      // 원시 상대 주소 "ip:port" — dst_node_id를 잇지 못했을 때 off-scope 판정 근거.
-  uint32 port = 4;
+  // 원시 상대 주소 — dst_node_id를 잇지 못했을 때 off-scope 판정 근거. 모양은 role에 따른다.
+  //   CLIENT: 서버 "ip:port".  SERVER: 클라이언트 "ip"(포트 없음 — 클라이언트 포트는 연결마다 바뀐다).
+  //   UNSPECIFIED: 상대 "ip"(포트 없음). IPv6는 괄호 없이 적는다.
+  // src_node_id는 role과 상관없이 늘 관측 노드다. 같은 연결을 양쪽 노드가 보면 기록이 노드마다 하나씩 생긴다(합치지 않는다).
+  string dst_addr = 3;
+  uint32 port = 4; // CLIENT: 서버 포트. SERVER: 관측 노드가 받은 포트. UNSPECIFIED: 0(어느 쪽이 서비스 포트인지 모른다).
   NetworkProtocol protocol = 5;
   EdgeRole role = 6;
 
@@ -61,7 +65,8 @@ message ObservedEdge {
   google.protobuf.Timestamp first_seen = 11;
   google.protobuf.Timestamp last_seen = 12;
 
-  // 이 엣지를 연 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
+  // 관측 노드에서 이 연결을 연(CLIENT) 또는 받은(SERVER) 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
+  // 같은 노드의 자산(Finding.app_keys)과 같은 값이면 같은 앱이다 — 그 연결이 그 라이브러리를 썼다는 뜻은 아니다.
   // 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 소켓은 연결의 두 끝점(로컬·원격 주소와 포트)으로
   // 찾는다 — 같은 목적지에 붙은 앱이 여럿이면 엣지도 앱마다 따로다. 출발 포트는 소켓을 찾는 데만 쓰고 엣지에
   // 싣지 않는다. 값의 모양은 asset.proto와 같다 — systemd 서비스 우선(경로의 마지막 `.service`, 사용자

@@ -93,9 +93,9 @@ func (NetworkProtocol) EnumDescriptor() ([]byte, []int) {
 type EdgeRole int32
 
 const (
-	EdgeRole_EDGE_ROLE_UNSPECIFIED EdgeRole = 0
-	EdgeRole_EDGE_ROLE_CLIENT      EdgeRole = 1 // src가 연결 개시자
-	EdgeRole_EDGE_ROLE_SERVER      EdgeRole = 2 // src가 수신자
+	EdgeRole_EDGE_ROLE_UNSPECIFIED EdgeRole = 0 // 역할을 확인하지 못함(추정하지 않는다). 예: SSH에서 로컬 포트의 LISTEN을 읽지 못했다
+	EdgeRole_EDGE_ROLE_CLIENT      EdgeRole = 1 // src(관측 노드)가 연결 개시자
+	EdgeRole_EDGE_ROLE_SERVER      EdgeRole = 2 // src(관측 노드)가 수신자. v0.18.0부터 netcap이 받은 연결도 낸다
 )
 
 // Enum value maps for EdgeRole.
@@ -193,11 +193,17 @@ func (QuantumPosture) EnumDescriptor() ([]byte, []int) {
 // 관측된 통신 엣지 한 단위 (§2 CommunicationEdge의 관측 레인).
 // Collector가 CollectionResult.observed_edges로 반환한다. 등급은 코어가 채운다.
 type ObservedEdge struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	SrcNodeId       string                 `protobuf:"bytes,1,opt,name=src_node_id,json=srcNodeId,proto3" json:"src_node_id,omitempty"` // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
-	DstNodeId       string                 `protobuf:"bytes,2,opt,name=dst_node_id,json=dstNodeId,proto3" json:"dst_node_id,omitempty"` // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
-	DstAddr         string                 `protobuf:"bytes,3,opt,name=dst_addr,json=dstAddr,proto3" json:"dst_addr,omitempty"`         // 원시 상대 주소 "ip:port" — dst_node_id를 잇지 못했을 때 off-scope 판정 근거.
-	Port            uint32                 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SrcNodeId string                 `protobuf:"bytes,1,opt,name=src_node_id,json=srcNodeId,proto3" json:"src_node_id,omitempty"` // 스코프 마스터 앵커(§1.4). 관측 캡처 호스트.
+	DstNodeId string                 `protobuf:"bytes,2,opt,name=dst_node_id,json=dstNodeId,proto3" json:"dst_node_id,omitempty"` // 스코프 마스터에 이어 붙인 상대. 미등재면 빈 문자열 + dst_addr로 표기(§1.4 등재요청).
+	// 원시 상대 주소 — dst_node_id를 잇지 못했을 때 off-scope 판정 근거. 모양은 role에 따른다.
+	//
+	//	CLIENT: 서버 "ip:port".  SERVER: 클라이언트 "ip"(포트 없음 — 클라이언트 포트는 연결마다 바뀐다).
+	//	UNSPECIFIED: 상대 "ip"(포트 없음). IPv6는 괄호 없이 적는다.
+	//
+	// src_node_id는 role과 상관없이 늘 관측 노드다. 같은 연결을 양쪽 노드가 보면 기록이 노드마다 하나씩 생긴다(합치지 않는다).
+	DstAddr         string                 `protobuf:"bytes,3,opt,name=dst_addr,json=dstAddr,proto3" json:"dst_addr,omitempty"`
+	Port            uint32                 `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"` // CLIENT: 서버 포트. SERVER: 관측 노드가 받은 포트. UNSPECIFIED: 0(어느 쪽이 서비스 포트인지 모른다).
 	Protocol        NetworkProtocol        `protobuf:"varint,5,opt,name=protocol,proto3,enum=pqcota.discovery.v1.NetworkProtocol" json:"protocol,omitempty"`
 	Role            EdgeRole               `protobuf:"varint,6,opt,name=role,proto3,enum=pqcota.discovery.v1.EdgeRole" json:"role,omitempty"`
 	NegotiatedGroup string                 `protobuf:"bytes,7,opt,name=negotiated_group,json=negotiatedGroup,proto3" json:"negotiated_group,omitempty"`                                        // 협상된 KEX 그룹. 등급 분류 입력. 예: "X25519MLKEM768".
@@ -206,7 +212,8 @@ type ObservedEdge struct {
 	ObservedCount   uint64                 `protobuf:"varint,10,opt,name=observed_count,json=observedCount,proto3" json:"observed_count,omitempty"`                                            // 관측 횟수(빈도) — 관측 구간에 핸드셰이크를 관측한 고유 연결 튜플(양쪽 주소·포트, 프로토콜)의 수. 구간 안에서 재사용된 튜플은 한 번만 센다. v0.12.0까지는 핸드셰이크 메시지 수였다. confidence 입력(§3.5).
 	FirstSeen       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=first_seen,json=firstSeen,proto3" json:"first_seen,omitempty"`
 	LastSeen        *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	// 이 엣지를 연 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
+	// 관측 노드에서 이 연결을 연(CLIENT) 또는 받은(SERVER) 애플리케이션(§1.5 자산 모델). (src_node_id, app_key)가 전역 유일.
+	// 같은 노드의 자산(Finding.app_keys)과 같은 값이면 같은 앱이다 — 그 연결이 그 라이브러리를 썼다는 뜻은 아니다.
 	// 캡처 시점에 소켓 inode를 /proc/*/fd와 대조해 채운다. 소켓은 연결의 두 끝점(로컬·원격 주소와 포트)으로
 	// 찾는다 — 같은 목적지에 붙은 앱이 여럿이면 엣지도 앱마다 따로다. 출발 포트는 소켓을 찾는 데만 쓰고 엣지에
 	// 싣지 않는다. 값의 모양은 asset.proto와 같다 — systemd 서비스 우선(경로의 마지막 `.service`, 사용자
