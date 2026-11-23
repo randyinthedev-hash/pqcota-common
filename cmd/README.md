@@ -4,6 +4,8 @@ English · [한국어](README.ko.md)
 
 The one command here is used by more than one stage, so it lives in the shared module instead of in a stage.
 
+**Every command prints its version with `--version` (or `-version`) given alone**, for example `pqcota-keygen v0.19.0 (go1.26.11 linux/amd64)`, and does nothing else. A build that is not a release says `not a release build`. The source commit is in the release manifest, not in this line. Given together with other arguments, `--version` is read like any other argument.
+
 ### `pqcota-keygen`
 
 ```

@@ -21,9 +21,11 @@ import (
 	"strings"
 
 	"github.com/randyinthedev-hash/pqcota-common/pkg/kernel/sign"
+	"github.com/randyinthedev-hash/pqcota-common/pkg/kernel/version"
 )
 
 func main() {
+	version.ExitIfRequested(os.Args[1:]) // 단독 --version·-version만 처리한다. 섞인 호출은 아래 규칙대로
 	collector := flag.String("collector", "", "collector ID(s) this key signs for, comma-separated — prints PQCOTA_VERIFY_KEY as <id>:<pub>")
 	node := flag.String("node", "", "node ID this key is given to — also prints the line for the key file (PQCOTA_VERIFY_KEY_FILE); needs -collector")
 	flag.Parse()
